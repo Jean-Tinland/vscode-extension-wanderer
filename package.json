@@ -3,7 +3,7 @@
   "displayName": "Wanderer",
   "description": "Spatial, infinite-canvas code navigation for VS Code, inspired by Haystack.",
   "icon": "media/logo.png",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "publisher": "jean",
   "repository": {
     "type": "git",
@@ -27,6 +27,12 @@
     "Visualization"
   ],
   "activationEvents": [],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Wanderer requires workspace trust for file edits and AI features."
+    }
+  },
   "contributes": {
     "viewsContainers": {
       "activitybar": [

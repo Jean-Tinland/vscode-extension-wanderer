@@ -365,6 +365,7 @@ export class CanvasPanel {
   private async onApplyEdit(
     msg: Extract<WebviewMessage, { type: "applyEdit" }>,
   ): Promise<void> {
+    this.assertWorkspaceTrusted("apply edits");
     const uri = this.parseRequestUri(msg.uri, "apply edit");
     this.assertWritableUri(uri, "apply edit");
     this.assertTrackedDocument(uri, "apply edit");
@@ -374,6 +375,7 @@ export class CanvasPanel {
   private async onApplyDelta(
     msg: Extract<WebviewMessage, { type: "applyDelta" }>,
   ): Promise<void> {
+    this.assertWorkspaceTrusted("apply edits");
     const uri = this.parseRequestUri(msg.uri, "apply delta");
     this.assertWritableUri(uri, "apply delta");
     this.assertTrackedDocument(uri, "apply delta");
@@ -758,6 +760,7 @@ export class CanvasPanel {
   }
 
   private async onRequestSaveDocument(msg: { fileUri: string }): Promise<void> {
+    this.assertWorkspaceTrusted("save documents");
     const uri = this.parseRequestUri(msg.fileUri, "save document");
     this.assertWritableUri(uri, "save document");
     this.assertTrackedDocument(uri, "save document");
@@ -776,6 +779,7 @@ export class CanvasPanel {
     textAfterCursor: string;
     languageId: string;
   }): Promise<void> {
+    this.assertWorkspaceTrusted("request AI completions");
     const uri = this.parseRequestUri(msg.fileUri, "inline completion");
     this.assertTrackedDocument(uri, "inline completion");
     const copilot = this.getCopilotService();
@@ -805,6 +809,7 @@ export class CanvasPanel {
     character: number;
     languageId: string;
   }): Promise<void> {
+    this.assertWorkspaceTrusted("run inline chat");
     const uri = this.parseRequestUri(msg.fileUri, "inline chat");
     this.assertTrackedDocument(uri, "inline chat");
     const copilot = this.getCopilotService();
@@ -945,6 +950,11 @@ export class CanvasPanel {
     if (!WRITABLE_URI_SCHEMES.has(uri.scheme.toLowerCase())) {
       throw new Error(`Refusing ${operation} for read-only URI scheme.`);
     }
+  }
+
+  private assertWorkspaceTrusted(operation: string): void {
+    if (vscode.workspace.isTrusted) return;
+    throw new Error(`Wanderer requires a trusted workspace to ${operation}.`);
   }
 
   private assertTrackedDocument(uri: vscode.Uri, operation: string): void {
