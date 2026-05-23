@@ -1,0 +1,240 @@
+.cw-toolbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 12;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  background: var(--vscode-editorWidget-background, rgba(30, 30, 30, 0.85));
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--vscode-editorWidget-border, #333);
+  backdrop-filter: blur(6px);
+}
+
+.cw-toolbar__group {
+  display: flex;
+  gap: 6px;
+}
+
+.cw-toolbar__group button,
+.cw-toolbar__shortcuts,
+.cw-shortcuts__header button {
+  background: var(--cw-secondary-button-background);
+  color: var(--cw-secondary-button-foreground);
+  border: 1px solid var(--cw-input-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.cw-toolbar__group button:hover,
+.cw-toolbar__select-wrap:hover,
+.cw-toolbar__shortcuts:hover,
+.cw-shortcuts__header button:hover {
+  background: var(--cw-secondary-button-hover-background);
+}
+
+.cw-toolbar__group button:disabled,
+.cw-toolbar__shortcuts:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.cw-toolbar__select-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  box-sizing: border-box;
+  background: var(--cw-secondary-button-background);
+  color: var(--cw-secondary-button-foreground);
+  border: 1px solid var(--cw-input-border);
+  border-radius: 4px;
+  padding: 0 8px;
+}
+
+.cw-toolbar__select-label {
+  font-size: 11px;
+  color: var(--cw-muted);
+  white-space: nowrap;
+}
+
+.cw-toolbar__select {
+  height: 22px;
+  min-width: 150px;
+  background: transparent;
+  color: var(--cw-secondary-button-foreground);
+  border: 0;
+  padding: 0;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.cw-toolbar__select:focus {
+  outline: none;
+}
+
+.cw-toolbar__icon-button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.cw-toolbar__icon-button .cw-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.cw-toolbar__button--active {
+  border-color: var(--vscode-focusBorder, #007acc);
+  box-shadow: inset 0 0 0 1px var(--vscode-focusBorder, #007acc);
+}
+
+.cw-toolbar__status {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.cw-toolbar__chip {
+  border: 1px solid var(--cw-border);
+  background: var(--vscode-editor-background, #1e1e1e);
+  color: var(--cw-muted);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+.cw-toolbar__chip--error {
+  border-color: color-mix(
+    in srgb,
+    var(--vscode-errorForeground, #f48771) 70%,
+    transparent
+  );
+  color: var(--vscode-errorForeground, #f48771);
+}
+
+.cw-toolbar__chip--warning {
+  border-color: color-mix(
+    in srgb,
+    var(--vscode-editorWarning-foreground, #d7ba7d) 70%,
+    transparent
+  );
+  color: var(--vscode-editorWarning-foreground, #d7ba7d);
+}
+
+.cw-tooltip-anchor {
+  display: inline-flex;
+  align-items: center;
+}
+
+.cw-tooltip {
+  position: fixed;
+  z-index: 45;
+  pointer-events: none;
+  border: 1px solid var(--cw-border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  white-space: nowrap;
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 500;
+  color: var(--cw-muted);
+  background: var(--vscode-editorWidget-background, rgba(30, 30, 30, 0.92));
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.32);
+  animation: cw-tooltip-fade-in 120ms ease-out;
+}
+
+@keyframes cw-tooltip-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cw-tooltip {
+    animation: none;
+  }
+}
+
+.cw-shortcuts {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+}
+
+.cw-shortcuts__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.cw-shortcuts__panel {
+  position: relative;
+  width: min(520px, calc(100vw - 32px));
+  max-height: min(70vh, 520px);
+  overflow: auto;
+  background: var(--cw-surface);
+  border: 1px solid var(--cw-border);
+  border-radius: 8px;
+  box-shadow: var(--cw-panel-shadow);
+}
+
+.cw-shortcuts__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--cw-border);
+}
+
+.cw-shortcuts__header h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cw-shortcuts__list {
+  padding: 6px 10px 10px;
+}
+
+.cw-shortcuts__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 4px;
+  border-bottom: 1px solid var(--cw-divider-color);
+  font-size: 12px;
+}
+
+.cw-shortcuts__row:last-child {
+  border-bottom: 0;
+}
+
+.cw-shortcuts__row kbd {
+  font-family: var(--vscode-editor-font-family, "Menlo", monospace);
+  border: 1px solid var(--cw-border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 2px 6px;
+  background: var(--vscode-editor-background, #1e1e1e);
+  color: var(--cw-text);
+}

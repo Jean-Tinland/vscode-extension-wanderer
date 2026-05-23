@@ -1,0 +1,13 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreDependencies": ["@types/plist"],
+  "workspaces": {
+    ".": {
+      "entry": ["extension/src/extension.ts"],
+      "project": ["extension/src/**/*.ts", "shared/**/*.ts"]
+    },
+    "webview": {
+      "project": ["src/**/*.{ts,tsx}"]
+    }
+  }
+}

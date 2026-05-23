@@ -1,0 +1,384 @@
+{
+  "name": "wanderer",
+  "displayName": "Wanderer",
+  "description": "Spatial, infinite-canvas code navigation for VS Code, inspired by Haystack.",
+  "icon": "media/logo.png",
+  "version": "0.1.1",
+  "publisher": "jean",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Jean-Tinland/vscode-extension-wanderer"
+  },
+  "private": true,
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "files": [
+    "dist/**",
+    "webview/dist/**",
+    "media/**",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ],
+  "main": "./dist/extension.js",
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "activationEvents": [],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "wanderer",
+          "title": "Wanderer",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "wanderer": [
+        {
+          "icon": "media/icon.svg",
+          "type": "webview",
+          "id": "wanderer.sidebarCanvas",
+          "name": "Canvas"
+        },
+        {
+          "id": "wanderer.savedLayouts",
+          "name": "Saved Layouts",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "wanderer.openCanvas",
+        "title": "Wanderer: Open Canvas"
+      },
+      {
+        "command": "wanderer.openCurrentFileOnCanvas",
+        "title": "Wanderer: Open Current File on Canvas"
+      },
+      {
+        "command": "wanderer.revealDefinition",
+        "title": "Wanderer: Reveal Definition on Canvas"
+      },
+      {
+        "command": "wanderer.canvas.openFile",
+        "title": "Wanderer: Canvas Open File"
+      },
+      {
+        "command": "wanderer.canvas.openManyFiles",
+        "title": "Wanderer: Canvas Open Multiple Files"
+      },
+      {
+        "command": "wanderer.canvas.openNodeSwitcher",
+        "title": "Wanderer: Canvas Open Node Switcher"
+      },
+      {
+        "command": "wanderer.canvas.focusPreviousNode",
+        "title": "Wanderer: Canvas Focus Previous Node"
+      },
+      {
+        "command": "wanderer.canvas.focusNextNode",
+        "title": "Wanderer: Canvas Focus Next Node"
+      },
+      {
+        "command": "wanderer.canvas.openFocusedNodeInWorkbench",
+        "title": "Wanderer: Canvas Open Focused Node in Side Editor"
+      },
+      {
+        "command": "wanderer.canvas.closeFocusedNode",
+        "title": "Wanderer: Canvas Close Focused Node"
+      },
+      {
+        "command": "wanderer.canvas.toggleFocusedNodeSize",
+        "title": "Wanderer: Canvas Toggle Focused Node Size"
+      },
+      {
+        "command": "wanderer.canvas.toggleSnapToGrid",
+        "title": "Wanderer: Canvas Toggle Snap to Grid"
+      },
+      {
+        "command": "wanderer.canvas.toggleReferenceClickMode",
+        "title": "Wanderer: Canvas Toggle Reference Click Mode"
+      },
+      {
+        "command": "wanderer.canvas.toggleProblemsPanel",
+        "title": "Wanderer: Canvas Toggle Problems Panel"
+      },
+      {
+        "command": "wanderer.canvas.toggleShortcutHelp",
+        "title": "Wanderer: Canvas Toggle Keyboard Cheatsheet"
+      },
+      {
+        "command": "wanderer.zoomToFit",
+        "title": "Wanderer: Zoom to Fit"
+      },
+      {
+        "command": "wanderer.saveLayout",
+        "title": "Wanderer: Save Layout",
+        "icon": "$(save)"
+      },
+      {
+        "command": "wanderer.resetLayout",
+        "title": "Wanderer: Reset Layout"
+      },
+      {
+        "command": "wanderer.loadLayout",
+        "title": "Load Layout",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "wanderer.renameLayout",
+        "title": "Rename Layout",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "wanderer.duplicateLayout",
+        "title": "Duplicate Layout",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "wanderer.toggleLayoutPin",
+        "title": "Toggle Layout Pin",
+        "icon": "$(pinned)"
+      },
+      {
+        "command": "wanderer.deleteLayout",
+        "title": "Delete Layout",
+        "icon": "$(trash)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "wanderer.openCanvas",
+        "key": "ctrl+alt+w",
+        "mac": "cmd+alt+w"
+      },
+      {
+        "command": "wanderer.openCurrentFileOnCanvas",
+        "key": "ctrl+alt+shift+o",
+        "mac": "cmd+alt+shift+o",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "wanderer.revealDefinition",
+        "key": "ctrl+alt+shift+d",
+        "mac": "cmd+alt+shift+d",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "wanderer.zoomToFit",
+        "key": "ctrl+alt+shift+0",
+        "mac": "cmd+alt+shift+0"
+      },
+      {
+        "command": "wanderer.saveLayout",
+        "key": "ctrl+alt+shift+s",
+        "mac": "cmd+alt+shift+s"
+      },
+      {
+        "command": "wanderer.canvas.openFile",
+        "key": "ctrl+alt+o",
+        "mac": "cmd+alt+o",
+        "when": "activeWebviewPanelId == 'wanderer.canvas'"
+      },
+      {
+        "command": "wanderer.canvas.openManyFiles",
+        "key": "ctrl+alt+shift+o",
+        "mac": "cmd+alt+shift+o",
+        "when": "activeWebviewPanelId == 'wanderer.canvas'"
+      },
+      {
+        "command": "wanderer.canvas.openNodeSwitcher",
+        "key": "ctrl+alt+k",
+        "mac": "cmd+ctrl+k",
+        "when": "activeWebviewPanelId == 'wanderer.canvas'"
+      },
+      {
+        "command": "wanderer.canvas.openNodeSwitcher",
+        "key": "ctrl+alt+j",
+        "mac": "cmd+ctrl+j",
+        "when": "activeWebviewPanelId == 'wanderer.canvas'"
+      },
+      {
+        "command": "wanderer.saveLayout",
+        "key": "ctrl+alt+s",
+        "mac": "cmd+alt+s",
+        "when": "activeWebviewPanelId == 'wanderer.canvas'"
+      },
+      {
+        "command": "wanderer.loadLayout",
+        "key": "ctrl+alt+l",
+        "mac": "cmd+alt+l",
+        "when": "activeWebviewPanelId == 'wanderer.canvas'"
+      },
+      {
+        "command": "wanderer.canvas.focusPreviousNode",
+        "key": "ctrl+alt+p",
+        "mac": "cmd+alt+p",
+        "when": "activeWebviewPanelId == 'wanderer.canvas'"
+      },
+      {
+        "command": "wanderer.canvas.focusNextNode",
+        "key": "ctrl+alt+n",
+        "mac": "cmd+alt+n",
+        "when": "activeWebviewPanelId == 'wanderer.canvas'"
+      },
+      {
+        "command": "wanderer.canvas.openFocusedNodeInWorkbench",
+        "key": "ctrl+alt+e",
+        "mac": "cmd+alt+e",
+        "when": "activeWebviewPanelId == 'wanderer.canvas'"
+      },
+      {
+        "command": "wanderer.canvas.closeFocusedNode",
+        "key": "ctrl+alt+x",
+        "mac": "cmd+alt+x",
+        "when": "activeWebviewPanelId == 'wanderer.canvas'"
+      },
+      {
+        "command": "wanderer.canvas.toggleFocusedNodeSize",
+        "key": "ctrl+alt+b",
+        "mac": "cmd+alt+b",
+        "when": "activeWebviewPanelId == 'wanderer.canvas'"
+      },
+      {
+        "command": "wanderer.zoomToFit",
+        "key": "ctrl+alt+0",
+        "mac": "cmd+alt+0",
+        "when": "activeWebviewPanelId == 'wanderer.canvas'"
+      },
+      {
+        "command": "wanderer.canvas.toggleSnapToGrid",
+        "key": "ctrl+alt+g",
+        "mac": "cmd+alt+g",
+        "when": "activeWebviewPanelId == 'wanderer.canvas'"
+      },
+      {
+        "command": "wanderer.canvas.toggleReferenceClickMode",
+        "key": "ctrl+alt+r",
+        "mac": "cmd+alt+r"
+      },
+      {
+        "command": "wanderer.canvas.toggleProblemsPanel",
+        "key": "ctrl+alt+m",
+        "mac": "cmd+alt+m",
+        "when": "activeWebviewPanelId == 'wanderer.canvas'"
+      },
+      {
+        "command": "wanderer.canvas.toggleShortcutHelp",
+        "key": "ctrl+alt+/",
+        "mac": "cmd+alt+/",
+        "when": "activeWebviewPanelId == 'wanderer.canvas'"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "wanderer.openCurrentFileOnCanvas",
+          "group": "navigation@99"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "wanderer.saveLayout",
+          "when": "view == wanderer.savedLayouts",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "wanderer.loadLayout",
+          "when": "viewItem == savedLayout || viewItem == savedLayoutPinned",
+          "group": "inline@1"
+        },
+        {
+          "command": "wanderer.renameLayout",
+          "when": "viewItem == savedLayout || viewItem == savedLayoutPinned",
+          "group": "1_edit@1"
+        },
+        {
+          "command": "wanderer.duplicateLayout",
+          "when": "viewItem == savedLayout || viewItem == savedLayoutPinned",
+          "group": "1_edit@2"
+        },
+        {
+          "command": "wanderer.toggleLayoutPin",
+          "when": "viewItem == savedLayout || viewItem == savedLayoutPinned",
+          "group": "1_edit@3"
+        },
+        {
+          "command": "wanderer.deleteLayout",
+          "when": "viewItem == savedLayout || viewItem == savedLayoutPinned",
+          "group": "2_delete@1"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Wanderer",
+      "properties": {
+        "wanderer.spatial.horizontalGap": {
+          "type": "number",
+          "default": 120,
+          "description": "Horizontal gap (px) between a source node and a definition node opened next to it."
+        },
+        "wanderer.spatial.verticalStack": {
+          "type": "number",
+          "default": 40,
+          "description": "Vertical offset (px) when stacking multiple results below a node."
+        },
+        "wanderer.node.defaultWidth": {
+          "type": "number",
+          "default": 520
+        },
+        "wanderer.node.defaultHeight": {
+          "type": "number",
+          "default": 360
+        }
+      }
+    }
+  },
+  "workspaces": [
+    "webview"
+  ],
+  "scripts": {
+    "build:extension": "node esbuild.config.mjs",
+    "build:webview": "npm --prefix webview run build",
+    "build": "npm run build:webview && npm run build:extension",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "knip": "knip --no-exit-code",
+    "knip:strict": "knip",
+    "watch:extension": "node esbuild.config.mjs --watch",
+    "watch:webview": "npm --prefix webview run dev",
+    "typecheck": "tsc -p tsconfig.json --noEmit && npm --prefix webview run typecheck",
+    "vscode:prepublish": "npm run build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.12.4",
+    "@types/plist": "^3.0.5",
+    "@types/vscode": "^1.90.0",
+    "esbuild": "^0.28.0",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.6.0",
+    "jsonc-parser": "^3.3.1",
+    "knip": "^6.14.1",
+    "plist": "^5.0.0",
+    "prettier": "^3.8.3",
+    "typescript": "^5.5.0",
+    "typescript-eslint": "^8.59.4"
+  },
+  "overrides": {
+    "dompurify": "3.4.5"
+  }
+}

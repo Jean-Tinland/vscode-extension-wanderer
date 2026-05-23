@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Canvas frame -->
+    <rect x="2" y="3" width="20" height="18" rx="2" />
+    <!-- Card nodes on canvas -->
+    <rect x="4" y="5" width="7" height="5" rx="1" />
+    <rect x="13" y="10" width="7" height="5" rx="1" />
+    <!-- Connection edge -->
+    <path d="M11 8 L13 12" />
+</svg>

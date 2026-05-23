@@ -1,0 +1,42 @@
+.react-flow {
+  --rf-background: var(--vscode-editor-background, #1e1e1e);
+  --cw-minimap-node-color: color-mix(
+    in srgb,
+    var(--vscode-editor-background, #1e1e1e) 86%,
+    #ffffff 14%
+  );
+  --cw-minimap-node-stroke: var(--vscode-editorGroup-border, #3a3a3a);
+  --cw-minimap-mask-color: var(--vscode-editor-background, #1e1e1e);
+  --cw-minimap-mask-stroke: var(--vscode-focusBorder, #007fd4);
+}
+
+.react-flow__background pattern line {
+  stroke: var(--vscode-editorIndentGuide-background, #2a2a2a);
+}
+
+.react-flow__minimap {
+  background: var(--vscode-sideBar-background, #252526) !important;
+  border: 1px solid var(--vscode-editorGroup-border, #3a3a3a);
+  border-radius: 4px;
+}
+
+.react-flow__minimap-mask {
+  opacity: 0.84;
+  stroke: var(--cw-minimap-mask-stroke) !important;
+  stroke-width: 2px;
+}
+
+.react-flow__controls button {
+  background: var(--vscode-button-secondaryBackground, #2d2d2d) !important;
+  color: var(--vscode-button-secondaryForeground, #ddd) !important;
+  border-color: var(--vscode-input-border, #444) !important;
+  fill: var(--vscode-button-secondaryForeground, #ddd) !important;
+}
+
+.react-flow__controls button:hover {
+  background: var(--vscode-button-secondaryHoverBackground, #3a3a3a) !important;
+}
+
+.react-flow__edge-path {
+  stroke: var(--vscode-editorLink-activeForeground, #4ea1ff);
+}

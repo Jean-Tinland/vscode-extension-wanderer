@@ -1,0 +1,5 @@
+node_modules
+dist
+webview/dist
+*.vsix
+package-lock.json
