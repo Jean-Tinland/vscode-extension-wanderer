@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4 - Sat, May 23 2026
+
+- docs: update README.md for improved description and add preview image
+
 ## 0.1.3 - Sat, May 23 2026
 
 - feat: require workspace trust for file edits and AI features

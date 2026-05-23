@@ -3,7 +3,7 @@
   "displayName": "Wanderer",
   "description": "Spatial, infinite-canvas code navigation for VS Code, inspired by Haystack.",
   "icon": "media/logo.png",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "publisher": "jean",
   "repository": {
     "type": "git",
