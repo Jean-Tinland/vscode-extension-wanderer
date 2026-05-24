@@ -104,7 +104,7 @@ If the panel shows the fallback page, rebuild first with `npm run build`.
 | Focus previous node                  | Cmd+Alt+P                | Ctrl+Alt+P               |
 | Focus next node                      | Cmd+Alt+N                | Ctrl+Alt+N               |
 | Open focused node in side editor     | Cmd+Alt+E                | Ctrl+Alt+E               |
-| Close focused node                   | Cmd+Alt+X                | Ctrl+Alt+X               |
+| Close focused node                   | Cmd+W                    | Ctrl+W                   |
 | Toggle focused node size             | Cmd+Alt+B                | Ctrl+Alt+B               |
 | Zoom to fit                          | Cmd+Alt+0                | Ctrl+Alt+0               |
 | Toggle snap to grid                  | Cmd+Alt+G                | Ctrl+Alt+G               |

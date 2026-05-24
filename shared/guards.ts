@@ -1,5 +1,6 @@
 import {
   CANVAS_COMMANDS,
+  REFERENCE_CLICK_MODES,
   type ExtensionMessage,
   type GraphSnapshot,
   type RangeLike,
@@ -8,6 +9,7 @@ import {
 
 type UnknownRecord = Record<string, unknown>;
 const CANVAS_COMMAND_SET = new Set<string>(CANVAS_COMMANDS);
+const REFERENCE_CLICK_MODE_SET = new Set<string>(REFERENCE_CLICK_MODES);
 
 function isObject(value: unknown): value is UnknownRecord {
   return typeof value === "object" && value !== null;
@@ -351,6 +353,33 @@ function isInlineCompletionItems(value: unknown): boolean {
   });
 }
 
+function isReferenceClickMode(value: unknown): boolean {
+  return isString(value) && REFERENCE_CLICK_MODE_SET.has(value);
+}
+
+function isSavedLayoutSummaryArray(value: unknown): boolean {
+  if (!isArray(value)) return false;
+  return value.every((item) => {
+    const obj = asObject(item);
+    if (!obj) return false;
+    if (
+      !isString(obj.name) ||
+      !isNumber(obj.nodeCount) ||
+      !isNumber(obj.savedAt) ||
+      !isNumber(obj.updatedAt)
+    ) {
+      return false;
+    }
+    if (obj.lastOpenedAt !== undefined && !isNumber(obj.lastOpenedAt)) {
+      return false;
+    }
+    if (obj.isPinned !== undefined && !isBoolean(obj.isPinned)) {
+      return false;
+    }
+    return true;
+  });
+}
+
 export function isWebviewMessage(value: unknown): value is WebviewMessage {
   const obj = asObject(value);
   if (!obj || !isString(obj.type)) return false;
@@ -359,7 +388,14 @@ export function isWebviewMessage(value: unknown): value is WebviewMessage {
     case "ready":
     case "requestSaveNamedLayout":
     case "requestLoadNamedLayout":
+    case "requestCloseCanvasTab":
       return true;
+
+    case "loadNamedLayout":
+      return isString(obj.name);
+
+    case "setReferenceClickMode":
+      return isReferenceClickMode(obj.mode);
 
     case "openFile":
       if (!isString(obj.requestId) || !isString(obj.fileUri)) return false;
@@ -483,7 +519,9 @@ export function isExtensionMessage(value: unknown): value is ExtensionMessage {
         (obj.layout === null || isGraphSnapshot(obj.layout)) &&
         isSettings(obj.settings) &&
         isTheme(obj.theme) &&
-        isEditorSettings(obj.editorSettings)
+        isEditorSettings(obj.editorSettings) &&
+        isSavedLayoutSummaryArray(obj.savedLayouts) &&
+        isReferenceClickMode(obj.referenceClickMode)
       );
 
     case "openFileResult":
@@ -516,6 +554,9 @@ export function isExtensionMessage(value: unknown): value is ExtensionMessage {
 
     case "editorSettingsChanged":
       return isEditorSettings(obj.editorSettings);
+
+    case "savedLayoutsChanged":
+      return isSavedLayoutSummaryArray(obj.layouts);
 
     case "command":
       return isString(obj.command) && CANVAS_COMMAND_SET.has(obj.command);

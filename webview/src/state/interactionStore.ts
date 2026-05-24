@@ -1,14 +1,12 @@
 import { create } from "zustand";
+import {
+  DEFAULT_REFERENCE_CLICK_MODE,
+  REFERENCE_CLICK_MODES,
+  type ReferenceClickMode,
+} from "@shared/protocol";
 
-export const REFERENCE_CLICK_MODES = [
-  "followReference",
-  "projectUsages",
-] as const;
-
-export type ReferenceClickMode = (typeof REFERENCE_CLICK_MODES)[number];
-
-export const DEFAULT_REFERENCE_CLICK_MODE: ReferenceClickMode =
-  "followReference";
+export { DEFAULT_REFERENCE_CLICK_MODE, REFERENCE_CLICK_MODES };
+export type { ReferenceClickMode };
 
 interface InteractionState {
   snapToGrid: boolean;

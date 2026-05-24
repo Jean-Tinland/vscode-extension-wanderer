@@ -3,6 +3,10 @@ import * as path from "node:path";
 import * as fs from "node:fs";
 import { randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
+import {
+  DEFAULT_REFERENCE_CLICK_MODE,
+  REFERENCE_CLICK_MODES,
+} from "../../shared/protocol";
 import type {
   CanvasCommand,
   CanvasNode,
@@ -12,6 +16,8 @@ import type {
   ExtensionMessage,
   GraphSnapshot,
   RangeLike,
+  ReferenceClickMode,
+  SavedLayoutSummary,
   WebviewMessage,
 } from "../../shared/protocol";
 import { isWebviewMessage } from "../../shared/guards";
@@ -22,6 +28,7 @@ import { ThemeService } from "./services/themeService";
 import { CopilotService } from "./services/copilotService";
 
 const RECENT_FILES_KEY = "wanderer.recentFiles";
+const REFERENCE_CLICK_MODE_KEY = "wanderer.referenceClickMode";
 const MAX_RECENT_FILES = 50;
 const BLOCKED_URI_SCHEMES = new Set([
   "command",
@@ -36,10 +43,31 @@ const WRITABLE_URI_SCHEMES = new Set([
   "vscode-remote",
   "vscode-userdata",
 ]);
+const REFERENCE_CLICK_MODE_SET = new Set<string>(REFERENCE_CLICK_MODES);
 
 export class CanvasPanel {
   static current: CanvasPanel | undefined;
   static readonly viewType = "wanderer.canvas";
+
+  private static getPanelOptions(
+    context: vscode.ExtensionContext,
+  ): vscode.WebviewPanelOptions & vscode.WebviewOptions {
+    return {
+      retainContextWhenHidden: true,
+      ...CanvasPanel.getWebviewOptions(context),
+    };
+  }
+
+  private static getWebviewOptions(
+    context: vscode.ExtensionContext,
+  ): vscode.WebviewOptions {
+    return {
+      enableScripts: true,
+      localResourceRoots: [
+        vscode.Uri.joinPath(context.extensionUri, "webview", "dist"),
+      ],
+    };
+  }
 
   static show(
     context: vscode.ExtensionContext,
@@ -53,14 +81,31 @@ export class CanvasPanel {
       CanvasPanel.viewType,
       "Wanderer",
       vscode.ViewColumn.Active,
-      {
-        enableScripts: true,
-        retainContextWhenHidden: true,
-        localResourceRoots: [
-          vscode.Uri.joinPath(context.extensionUri, "webview", "dist"),
-        ],
-      },
+      CanvasPanel.getPanelOptions(context),
     );
+    CanvasPanel.current = new CanvasPanel(
+      panel,
+      context,
+      layoutStore ?? new LayoutStore(context),
+    );
+    return CanvasPanel.current;
+  }
+
+  static revive(
+    panel: vscode.WebviewPanel,
+    context: vscode.ExtensionContext,
+    layoutStore?: LayoutStore,
+  ): CanvasPanel {
+    if (CanvasPanel.current?.panel === panel) {
+      return CanvasPanel.current;
+    }
+    if (CanvasPanel.current) {
+      CanvasPanel.current.dispose();
+    }
+
+    panel.title = "Wanderer";
+    panel.webview.options = CanvasPanel.getWebviewOptions(context);
+
     CanvasPanel.current = new CanvasPanel(
       panel,
       context,
@@ -87,6 +132,14 @@ export class CanvasPanel {
     panel.webview.html = this.renderHtml();
 
     this.disposables.push(
+      this.layoutStore.onDidChange(() => {
+        if (!this.ready) return;
+        this.post({
+          type: "savedLayoutsChanged",
+          layouts: this.toSavedLayoutSummaries(),
+        });
+      }),
+
       panel.onDidDispose(() => this.dispose()),
       panel.webview.onDidReceiveMessage((m: unknown) => {
         if (!isWebviewMessage(m)) {
@@ -161,7 +214,10 @@ export class CanvasPanel {
     this.editorSettingsSubscription = vscode.workspace.onDidChangeConfiguration(
       (e) => {
         if (!this.ready) return;
-        if (e.affectsConfiguration("editor")) {
+        if (
+          e.affectsConfiguration("editor") ||
+          e.affectsConfiguration("wanderer.webview.editor")
+        ) {
           this.post({
             type: "editorSettingsChanged",
             editorSettings: this.readEditorSettings(),
@@ -201,6 +257,8 @@ export class CanvasPanel {
         settings: this.readSettings(),
         theme: this.getThemeService().resolve(),
         editorSettings: this.readEditorSettings(),
+        savedLayouts: this.toSavedLayoutSummaries(),
+        referenceClickMode: this.readReferenceClickMode(),
       });
     if (this.ready) run();
     else this.pendingOpens.push(run);
@@ -288,6 +346,9 @@ export class CanvasPanel {
     requestOpenDialog: (m) => this.onRequestOpenDialog(m),
     requestSaveNamedLayout: () => this.onRequestSaveNamedLayout(),
     requestLoadNamedLayout: () => this.onRequestLoadNamedLayout(),
+    requestCloseCanvasTab: () => this.onRequestCloseCanvasTab(),
+    loadNamedLayout: (m) => this.onLoadNamedLayout(m),
+    setReferenceClickMode: (m) => this.onSetReferenceClickMode(m),
     requestHover: (m) => this.onRequestHover(m),
     requestCompletion: (m) => this.onRequestCompletion(m),
     requestFormat: (m) => this.onRequestFormat(m),
@@ -311,6 +372,8 @@ export class CanvasPanel {
       settings: this.readSettings(),
       theme,
       editorSettings: this.readEditorSettings(),
+      savedLayouts: this.toSavedLayoutSummaries(),
+      referenceClickMode: this.readReferenceClickMode(),
     });
     for (const run of this.pendingOpens.splice(0)) run();
   }
@@ -485,6 +548,24 @@ export class CanvasPanel {
 
   private readEditorSettings(): EditorSettings {
     const cfg = vscode.workspace.getConfiguration("editor");
+    const wandererCfg = vscode.workspace.getConfiguration("wanderer");
+
+    const minimapEnabled = wandererCfg.get<boolean>(
+      "webview.editor.minimap.enabled",
+      false,
+    );
+    const bracketPairColorizationOverride = wandererCfg.inspect<boolean>(
+      "webview.editor.bracketPairColorization.enabled",
+    );
+    const bracketPairColorizationEnabled =
+      bracketPairColorizationOverride?.workspaceFolderLanguageValue ??
+      bracketPairColorizationOverride?.workspaceLanguageValue ??
+      bracketPairColorizationOverride?.globalLanguageValue ??
+      bracketPairColorizationOverride?.workspaceFolderValue ??
+      bracketPairColorizationOverride?.workspaceValue ??
+      bracketPairColorizationOverride?.globalValue ??
+      cfg.get<boolean>("bracketPairColorization.enabled", true);
+
     return {
       fontSize: cfg.get<number>("fontSize", 14),
       fontFamily: cfg.get<string>(
@@ -500,7 +581,7 @@ export class CanvasPanel {
         "off",
       ),
       wordWrapColumn: cfg.get<number>("wordWrapColumn", 80),
-      minimap: cfg.get<boolean>("minimap.enabled", true),
+      minimap: minimapEnabled,
       renderWhitespace: cfg.get<EditorSettings["renderWhitespace"]>(
         "renderWhitespace",
         "selection",
@@ -508,10 +589,7 @@ export class CanvasPanel {
       cursorStyle: cfg.get<string>("cursorStyle", "line"),
       cursorBlinking: cfg.get<string>("cursorBlinking", "blink"),
       smoothScrolling: cfg.get<boolean>("smoothScrolling", false),
-      bracketPairColorization: cfg.get<boolean>(
-        "bracketPairColorization.enabled",
-        true,
-      ),
+      bracketPairColorization: bracketPairColorizationEnabled,
       bracketPairColorizationIndependentColorPoolPerBracketType:
         cfg.get<boolean>(
           "bracketPairColorization.independentColorPoolPerBracketType",
@@ -573,6 +651,30 @@ export class CanvasPanel {
     if (!pick) return;
     this.layoutStore.markOpened(pick.layout.name);
     this.loadSnapshot(pick.layout.snapshot);
+  }
+
+  private onLoadNamedLayout(
+    msg: Extract<WebviewMessage, { type: "loadNamedLayout" }>,
+  ): void {
+    const saved = this.layoutStore.get(msg.name);
+    if (!saved) {
+      vscode.window.showWarningMessage(
+        `Wanderer: layout "${msg.name}" not found.`,
+      );
+      return;
+    }
+    this.layoutStore.markOpened(saved.name);
+    this.loadSnapshot(saved.snapshot);
+  }
+
+  private onSetReferenceClickMode(
+    msg: Extract<WebviewMessage, { type: "setReferenceClickMode" }>,
+  ): void {
+    void this.context.workspaceState.update(REFERENCE_CLICK_MODE_KEY, msg.mode);
+  }
+
+  private onRequestCloseCanvasTab(): void {
+    this.panel.dispose();
   }
 
   private async onRequestOpenDialog(
@@ -974,6 +1076,27 @@ export class CanvasPanel {
         // Skip unsupported URIs saved by older versions.
       }
     }
+  }
+
+  private toSavedLayoutSummaries(): SavedLayoutSummary[] {
+    return this.layoutStore.list().map((layout) => ({
+      name: layout.name,
+      nodeCount: layout.snapshot.nodes.length,
+      savedAt: layout.savedAt,
+      updatedAt: layout.updatedAt,
+      lastOpenedAt: layout.lastOpenedAt,
+      isPinned: layout.isPinned === true,
+    }));
+  }
+
+  private readReferenceClickMode(): ReferenceClickMode {
+    const value = this.context.workspaceState.get<unknown>(
+      REFERENCE_CLICK_MODE_KEY,
+    );
+    if (typeof value === "string" && REFERENCE_CLICK_MODE_SET.has(value)) {
+      return value as ReferenceClickMode;
+    }
+    return DEFAULT_REFERENCE_CLICK_MODE;
   }
 }
 

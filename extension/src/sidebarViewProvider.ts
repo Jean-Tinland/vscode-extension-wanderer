@@ -1,15 +1,15 @@
 import * as vscode from "vscode";
-import { randomUUID } from "node:crypto";
 
 export interface SidebarViewProviderHandlers {
   openCanvas: () => void | Promise<void>;
-  openCurrentFileOnCanvas: () => void | Promise<void>;
 }
 
 /**
- * Sidebar webview view that lives behind the activity-bar icon.
- * When revealed it shows a lightweight launcher; the "Open Canvas" button
- * opens the full-size panel in the editor area.
+ * Activity-bar bridge view.
+ *
+ * The view itself is intentionally minimal: whenever it becomes visible,
+ * it immediately opens the full canvas panel and closes the sidebar so
+ * clicking the activity icon behaves like a direct "Open Canvas" action.
  */
 export class SidebarViewProvider implements vscode.WebviewViewProvider {
   static readonly viewType = "wanderer.sidebarCanvas";
@@ -22,81 +22,49 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
     _token: vscode.CancellationToken,
   ): void {
     webviewView.webview.options = {
-      enableScripts: true,
+      enableScripts: false,
       localResourceRoots: [],
     };
     webviewView.webview.html = this.html(webviewView.webview);
 
-    webviewView.webview.onDidReceiveMessage((msg: unknown) => {
-      if (!isSidebarCommandMessage(msg)) return;
-      if (msg.command === "openCanvas") {
-        void this.handlers.openCanvas();
-      } else if (msg.command === "openCurrentFile") {
-        void this.handlers.openCurrentFileOnCanvas();
-      }
+    let opening = false;
+    const openCanvasFromActivity = () => {
+      if (!webviewView.visible || opening) return;
+      opening = true;
+      void Promise.resolve(this.handlers.openCanvas())
+        .then(() =>
+          vscode.commands.executeCommand("workbench.action.closeSidebar"),
+        )
+        .finally(() => {
+          opening = false;
+        });
+    };
+
+    openCanvasFromActivity();
+    webviewView.onDidChangeVisibility(() => {
+      openCanvasFromActivity();
     });
   }
 
   private html(webview: vscode.Webview): string {
-    const nonce = randomUUID().replace(/-/g, "");
     return /* html */ `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline';">
   <style>
     body {
-      font-family: var(--vscode-font-family, system-ui, sans-serif);
-      color: var(--vscode-foreground);
-      background: var(--vscode-sideBar-background);
-      padding: 16px;
       margin: 0;
+      padding: 12px;
+      color: var(--vscode-descriptionForeground);
+      background: var(--vscode-sideBar-background);
+      font: 12px/1.4 var(--vscode-font-family, system-ui, sans-serif);
     }
-    h3 { margin: 0 0 12px; font-weight: 500; font-size: 13px; }
-    p  { margin: 0 0 16px; font-size: 12px; color: var(--vscode-descriptionForeground); }
-    button {
-      display: block;
-      width: 100%;
-      padding: 8px 12px;
-      margin-bottom: 8px;
-      border: none;
-      border-radius: 4px;
-      font-size: 12px;
-      cursor: pointer;
-      background: var(--vscode-button-background);
-      color: var(--vscode-button-foreground);
-    }
-    button:hover { background: var(--vscode-button-hoverBackground); }
-    button.secondary {
-      background: var(--vscode-button-secondaryBackground);
-      color: var(--vscode-button-secondaryForeground);
-    }
-    button.secondary:hover { background: var(--vscode-button-secondaryHoverBackground); }
   </style>
 </head>
 <body>
-  <h3>Wanderer</h3>
-  <p>Navigate your codebase spatially on an infinite canvas.</p>
-  <button id="open-canvas">Open Canvas</button>
-  <button id="open-current-file" class="secondary">Open Current File on Canvas</button>
-  <script nonce="${nonce}">
-    const vscode = acquireVsCodeApi();
-    document
-      .getElementById('open-canvas')
-      ?.addEventListener('click', () => vscode.postMessage({ command: 'openCanvas' }));
-    document
-      .getElementById('open-current-file')
-      ?.addEventListener('click', () => vscode.postMessage({ command: 'openCurrentFile' }));
-  </script>
+  Opening Wanderer canvas...
 </body>
 </html>`;
   }
-}
-
-function isSidebarCommandMessage(
-  value: unknown,
-): value is { command: "openCanvas" | "openCurrentFile" } {
-  if (typeof value !== "object" || value === null) return false;
-  const command = (value as { command?: unknown }).command;
-  return command === "openCanvas" || command === "openCurrentFile";
 }

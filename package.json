@@ -3,7 +3,7 @@
   "displayName": "Wanderer",
   "description": "Spatial, infinite-canvas code navigation for VS Code, inspired by Haystack.",
   "icon": "media/logo.png",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "publisher": "jean",
   "repository": {
     "type": "git",
@@ -26,7 +26,9 @@
     "Other",
     "Visualization"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onWebviewPanel:wanderer.canvas"
+  ],
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": "limited",
@@ -50,11 +52,6 @@
           "type": "webview",
           "id": "wanderer.sidebarCanvas",
           "name": "Canvas"
-        },
-        {
-          "id": "wanderer.savedLayouts",
-          "name": "Saved Layouts",
-          "icon": "media/icon.svg"
         }
       ]
     },
@@ -241,9 +238,15 @@
         "when": "activeWebviewPanelId == 'wanderer.canvas'"
       },
       {
+        "command": "-workbench.action.closeActiveEditor",
+        "key": "ctrl+w",
+        "mac": "cmd+w",
+        "when": "activeWebviewPanelId == 'wanderer.canvas'"
+      },
+      {
         "command": "wanderer.canvas.closeFocusedNode",
-        "key": "ctrl+alt+x",
-        "mac": "cmd+alt+x",
+        "key": "ctrl+w",
+        "mac": "cmd+w",
         "when": "activeWebviewPanelId == 'wanderer.canvas'"
       },
       {
@@ -288,40 +291,6 @@
           "command": "wanderer.openCurrentFileOnCanvas",
           "group": "navigation@99"
         }
-      ],
-      "view/title": [
-        {
-          "command": "wanderer.saveLayout",
-          "when": "view == wanderer.savedLayouts",
-          "group": "navigation"
-        }
-      ],
-      "view/item/context": [
-        {
-          "command": "wanderer.loadLayout",
-          "when": "viewItem == savedLayout || viewItem == savedLayoutPinned",
-          "group": "inline@1"
-        },
-        {
-          "command": "wanderer.renameLayout",
-          "when": "viewItem == savedLayout || viewItem == savedLayoutPinned",
-          "group": "1_edit@1"
-        },
-        {
-          "command": "wanderer.duplicateLayout",
-          "when": "viewItem == savedLayout || viewItem == savedLayoutPinned",
-          "group": "1_edit@2"
-        },
-        {
-          "command": "wanderer.toggleLayoutPin",
-          "when": "viewItem == savedLayout || viewItem == savedLayoutPinned",
-          "group": "1_edit@3"
-        },
-        {
-          "command": "wanderer.deleteLayout",
-          "when": "viewItem == savedLayout || viewItem == savedLayoutPinned",
-          "group": "2_delete@1"
-        }
       ]
     },
     "configuration": {
@@ -344,6 +313,16 @@
         "wanderer.node.defaultHeight": {
           "type": "number",
           "default": 360
+        },
+        "wanderer.webview.editor.minimap.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show the Monaco minimap inside Wanderer webview editors."
+        },
+        "wanderer.webview.editor.bracketPairColorization.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable bracket pair colorization inside Wanderer webview editors."
         }
       }
     }

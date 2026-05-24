@@ -52,6 +52,25 @@ export interface GraphSnapshot {
   buffers?: Record<string, EditorBufferSnapshot>;
 }
 
+export const REFERENCE_CLICK_MODES = [
+  "followReference",
+  "projectUsages",
+] as const;
+
+export type ReferenceClickMode = (typeof REFERENCE_CLICK_MODES)[number];
+
+export const DEFAULT_REFERENCE_CLICK_MODE: ReferenceClickMode =
+  "followReference";
+
+export interface SavedLayoutSummary {
+  name: string;
+  nodeCount: number;
+  savedAt: number;
+  updatedAt: number;
+  lastOpenedAt?: number;
+  isPinned?: boolean;
+}
+
 export const CANVAS_COMMANDS = [
   "zoomToFit",
   "requestSaveLayout",
@@ -79,6 +98,8 @@ export type ExtensionMessage =
       settings: CanvasSettings;
       theme: MonacoThemeData;
       editorSettings: EditorSettings;
+      savedLayouts: SavedLayoutSummary[];
+      referenceClickMode: ReferenceClickMode;
     }
   | {
       type: "openFileResult";
@@ -109,6 +130,7 @@ export type ExtensionMessage =
     }
   | { type: "themeChanged"; theme: MonacoThemeData }
   | { type: "editorSettingsChanged"; editorSettings: EditorSettings }
+  | { type: "savedLayoutsChanged"; layouts: SavedLayoutSummary[] }
   | { type: "command"; command: CanvasCommand }
   | { type: "error"; message: string; requestId?: string }
   | {
@@ -192,6 +214,9 @@ export type WebviewMessage =
   | { type: "requestOpenDialog"; options?: OpenDialogOptions }
   | { type: "requestSaveNamedLayout" }
   | { type: "requestLoadNamedLayout" }
+  | { type: "requestCloseCanvasTab" }
+  | { type: "loadNamedLayout"; name: string }
+  | { type: "setReferenceClickMode"; mode: ReferenceClickMode }
   | {
       type: "requestHover";
       requestId: string;

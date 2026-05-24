@@ -6,20 +6,14 @@ type CanvasPanelInstance = import("./canvasPanel.js").CanvasPanel;
 type SidebarViewProviderModule = typeof import("./sidebarViewProvider.js");
 type LayoutStoreModule = typeof import("./persistence/layoutStore.js");
 type LayoutStoreInstance = import("./persistence/layoutStore.js").LayoutStore;
-type LayoutTreeProviderModule = typeof import("./layoutTreeProvider.js");
-type LayoutItem = import("./layoutTreeProvider.js").LayoutItem;
 
 const SIDEBAR_VIEW_TYPE = "wanderer.sidebarCanvas";
-const SAVED_LAYOUTS_VIEW_ID = "wanderer.savedLayouts";
 
 let canvasPanelModulePromise: Promise<CanvasPanelModule> | undefined;
 let sidebarViewProviderModulePromise:
   | Promise<SidebarViewProviderModule>
   | undefined;
 let layoutStoreModulePromise: Promise<LayoutStoreModule> | undefined;
-let layoutTreeProviderModulePromise:
-  | Promise<LayoutTreeProviderModule>
-  | undefined;
 
 function loadCanvasPanelModule(): Promise<CanvasPanelModule> {
   if (!canvasPanelModulePromise) {
@@ -42,13 +36,6 @@ function loadLayoutStoreModule(): Promise<LayoutStoreModule> {
   return layoutStoreModulePromise;
 }
 
-function loadLayoutTreeProviderModule(): Promise<LayoutTreeProviderModule> {
-  if (!layoutTreeProviderModulePromise) {
-    layoutTreeProviderModulePromise = import("./layoutTreeProvider.js");
-  }
-  return layoutTreeProviderModulePromise;
-}
-
 export function activate(context: vscode.ExtensionContext): void {
   let layoutStorePromise: Promise<LayoutStoreInstance> | undefined;
   const getLayoutStore = async (): Promise<LayoutStoreInstance> => {
@@ -66,6 +53,16 @@ export function activate(context: vscode.ExtensionContext): void {
       getLayoutStore(),
     ]);
     return CanvasPanel.current ?? CanvasPanel.show(context, layoutStore);
+  };
+
+  const reviveCanvasPanel = async (
+    webviewPanel: vscode.WebviewPanel,
+  ): Promise<void> => {
+    const [{ CanvasPanel }, layoutStore] = await Promise.all([
+      loadCanvasPanelModule(),
+      getLayoutStore(),
+    ]);
+    CanvasPanel.revive(webviewPanel, context, layoutStore);
   };
 
   const openCurrentFileOnCanvas = async (): Promise<void> => {
@@ -92,7 +89,6 @@ export function activate(context: vscode.ExtensionContext): void {
           openCanvas: async () => {
             await ensureCanvasPanel();
           },
-          openCurrentFileOnCanvas,
         });
       })();
     }
@@ -103,43 +99,6 @@ export function activate(context: vscode.ExtensionContext): void {
     resolveWebviewView: async (webviewView, resolveContext, token) => {
       const provider = await getSidebarProvider();
       await provider.resolveWebviewView(webviewView, resolveContext, token);
-    },
-  };
-
-  const treeDidChange = new vscode.EventEmitter<
-    LayoutItem | undefined | void
-  >();
-  let layoutTreeProviderPromise:
-    | Promise<vscode.TreeDataProvider<LayoutItem>>
-    | undefined;
-  const getLayoutTreeProvider = async (): Promise<
-    vscode.TreeDataProvider<LayoutItem>
-  > => {
-    if (!layoutTreeProviderPromise) {
-      layoutTreeProviderPromise = (async () => {
-        const [{ LayoutTreeProvider }, store] = await Promise.all([
-          loadLayoutTreeProviderModule(),
-          getLayoutStore(),
-        ]);
-        const provider = new LayoutTreeProvider(store);
-        context.subscriptions.push(
-          provider.onDidChangeTreeData((item) => treeDidChange.fire(item)),
-        );
-        return provider;
-      })();
-    }
-    return layoutTreeProviderPromise;
-  };
-
-  const lazyLayoutTreeProvider: vscode.TreeDataProvider<LayoutItem> = {
-    onDidChangeTreeData: treeDidChange.event,
-    getTreeItem: async (element) => {
-      const provider = await getLayoutTreeProvider();
-      return provider.getTreeItem(element);
-    },
-    getChildren: async (element) => {
-      const provider = await getLayoutTreeProvider();
-      return provider.getChildren(element);
     },
   };
 
@@ -156,17 +115,16 @@ export function activate(context: vscode.ExtensionContext): void {
     });
 
   context.subscriptions.push(
-    treeDidChange,
-
     vscode.window.registerWebviewViewProvider(
       SIDEBAR_VIEW_TYPE,
       lazySidebarProvider,
     ),
 
-    vscode.window.registerTreeDataProvider(
-      SAVED_LAYOUTS_VIEW_ID,
-      lazyLayoutTreeProvider,
-    ),
+    vscode.window.registerWebviewPanelSerializer("wanderer.canvas", {
+      deserializeWebviewPanel: async (webviewPanel) => {
+        await reviveCanvasPanel(webviewPanel);
+      },
+    }),
 
     {
       dispose: () => {
@@ -260,14 +218,9 @@ export function activate(context: vscode.ExtensionContext): void {
 
     vscode.commands.registerCommand(
       "wanderer.loadLayout",
-      async (nameOrItem?: string | LayoutItem) => {
+      async (name?: string) => {
         const layoutStore = await getLayoutStore();
-        let name: string | undefined;
-        if (typeof nameOrItem === "string") {
-          name = nameOrItem;
-        } else if (nameOrItem) {
-          name = nameOrItem.layout.name;
-        } else {
+        if (!name) {
           const layouts = layoutStore.list();
           if (layouts.length === 0) {
             vscode.window.showInformationMessage(
@@ -311,10 +264,9 @@ export function activate(context: vscode.ExtensionContext): void {
 
     vscode.commands.registerCommand(
       "wanderer.duplicateLayout",
-      async (item?: LayoutItem | string) => {
+      async (item?: string) => {
         const layoutStore = await getLayoutStore();
-        let sourceName =
-          typeof item === "string" ? item : (item?.layout.name ?? undefined);
+        let sourceName = item;
         if (!sourceName) {
           const pick = await vscode.window.showQuickPick(
             layoutStore.list().map((layout) => ({
@@ -361,13 +313,28 @@ export function activate(context: vscode.ExtensionContext): void {
 
     vscode.commands.registerCommand(
       "wanderer.toggleLayoutPin",
-      async (item?: LayoutItem) => {
-        if (!item) return;
+      async (name?: string) => {
         const layoutStore = await getLayoutStore();
-        const pinned = layoutStore.togglePinned(item.layout.name);
+        if (!name) {
+          const pick = await vscode.window.showQuickPick(
+            layoutStore.list().map((layout) => ({
+              label: layout.name,
+              description: `${layout.snapshot.nodes.length} file(s)`,
+            })),
+            {
+              placeHolder: "Select a layout to pin or unpin",
+              matchOnDescription: true,
+            },
+          );
+          if (!pick) return;
+          name = pick.label;
+        }
+
+        if (!name) return;
+        const pinned = layoutStore.togglePinned(name);
         if (pinned === undefined) {
           vscode.window.showWarningMessage(
-            `Wanderer: layout "${item.layout.name}" not found.`,
+            `Wanderer: layout "${name}" not found.`,
           );
         }
       },
@@ -375,16 +342,32 @@ export function activate(context: vscode.ExtensionContext): void {
 
     vscode.commands.registerCommand(
       "wanderer.renameLayout",
-      async (item: LayoutItem) => {
+      async (name?: string) => {
         const layoutStore = await getLayoutStore();
+        if (!name) {
+          const pick = await vscode.window.showQuickPick(
+            layoutStore.list().map((layout) => ({
+              label: layout.name,
+              description: `${layout.snapshot.nodes.length} file(s)`,
+            })),
+            {
+              placeHolder: "Select a layout to rename",
+              matchOnDescription: true,
+            },
+          );
+          if (!pick) return;
+          name = pick.label;
+        }
+
+        if (!name) return;
         const newName = await vscode.window.showInputBox({
           prompt: "New layout name",
-          value: item.layout.name,
+          value: name,
           validateInput: (v) =>
             v.trim().length === 0 ? "Name cannot be empty" : undefined,
         });
-        if (!newName || newName.trim() === item.layout.name) return;
-        const ok = layoutStore.rename(item.layout.name, newName.trim());
+        if (!newName || newName.trim() === name) return;
+        const ok = layoutStore.rename(name, newName.trim());
         if (!ok) {
           vscode.window.showWarningMessage(
             `Wanderer: a layout named "${newName.trim()}" already exists.`,
@@ -395,15 +378,31 @@ export function activate(context: vscode.ExtensionContext): void {
 
     vscode.commands.registerCommand(
       "wanderer.deleteLayout",
-      async (item: LayoutItem) => {
+      async (name?: string) => {
         const layoutStore = await getLayoutStore();
+        if (!name) {
+          const pick = await vscode.window.showQuickPick(
+            layoutStore.list().map((layout) => ({
+              label: layout.name,
+              description: `${layout.snapshot.nodes.length} file(s)`,
+            })),
+            {
+              placeHolder: "Select a layout to delete",
+              matchOnDescription: true,
+            },
+          );
+          if (!pick) return;
+          name = pick.label;
+        }
+
+        if (!name) return;
         const answer = await vscode.window.showWarningMessage(
-          `Delete layout "${item.layout.name}"?`,
+          `Delete layout "${name}"?`,
           { modal: true },
           "Delete",
         );
         if (answer !== "Delete") return;
-        layoutStore.deleteNamed(item.layout.name);
+        layoutStore.deleteNamed(name);
       },
     ),
 

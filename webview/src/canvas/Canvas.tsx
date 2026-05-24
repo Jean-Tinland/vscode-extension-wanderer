@@ -487,7 +487,7 @@ function CanvasInner() {
         panOnDrag={false}
         panActivationKeyCode={null}
         zoomOnScroll={false}
-        zoomOnPinch={false}
+        zoomOnPinch={true}
       >
         <Background gap={gridSize} size={1} />
         <MiniMap

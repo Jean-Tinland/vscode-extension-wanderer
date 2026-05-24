@@ -1,7 +1,9 @@
 import { type ComponentPropsWithoutRef, type ReactNode, useRef } from "react";
+import type { SavedLayoutSummary } from "@shared/protocol";
 import type { ShortcutHint } from "../keyboard/shortcuts";
 import { useDialogFocusTrap } from "../hooks/useDialogFocusTrap";
 import type { ReferenceClickMode } from "../state/interactionStore";
+import { BaseSelect, type BaseSelectOption } from "./BaseSelect";
 import { Icon } from "./Icon";
 import { Tooltip } from "./Tooltip";
 
@@ -13,6 +15,7 @@ interface ToolbarProps {
   zoom: number;
   snapToGrid: boolean;
   referenceClickMode: ReferenceClickMode;
+  savedLayouts: SavedLayoutSummary[];
   showShortcuts: boolean;
   showProblems: boolean;
   showOnboarding: boolean;
@@ -21,7 +24,7 @@ interface ToolbarProps {
   onOpenManyFiles: () => void;
   onOpenNodeSwitcher: () => void;
   onSaveLayout: () => void;
-  onLoadLayout: () => void;
+  onLoadLayout: (name: string) => void;
   onNextNode: () => void;
   onPreviousNode: () => void;
   onZoomToFit: () => void;
@@ -45,14 +48,23 @@ function ToolbarIconButton({
   children,
   ...buttonProps
 }: ToolbarIconButtonProps) {
+  const className = buttonProps.className
+    ? `cw-ui-button cw-ui-icon-button ${buttonProps.className}`
+    : "cw-ui-button cw-ui-icon-button";
+
   return (
     <Tooltip label={tooltip}>
-      <button type={type} {...buttonProps}>
+      <button type={type} {...buttonProps} className={className}>
         {children}
       </button>
     </Tooltip>
   );
 }
+
+const REFERENCE_MODE_OPTIONS: BaseSelectOption<ReferenceClickMode>[] = [
+  { value: "followReference", label: "Follow reference" },
+  { value: "projectUsages", label: "Project usages" },
+];
 
 export function Toolbar({
   nodeCount,
@@ -62,6 +74,7 @@ export function Toolbar({
   zoom,
   snapToGrid,
   referenceClickMode,
+  savedLayouts,
   showShortcuts,
   showProblems,
   showOnboarding,
@@ -83,6 +96,13 @@ export function Toolbar({
   canCycleNodes,
 }: ToolbarProps) {
   const shortcutsPanelRef = useRef<HTMLDivElement | null>(null);
+  const layoutOptions: BaseSelectOption<string>[] = savedLayouts.map(
+    (layout) => ({
+      value: layout.name,
+      label: layout.name,
+      meta: `${layout.nodeCount} file(s)${layout.isPinned ? " | pinned" : ""}`,
+    }),
+  );
 
   useDialogFocusTrap(showShortcuts, shortcutsPanelRef);
 
@@ -94,25 +114,18 @@ export function Toolbar({
           role="group"
           aria-label="Reference click behavior"
         >
-          <label
-            className="cw-toolbar__select-wrap"
+          <BaseSelect<ReferenceClickMode>
+            label="Mode:"
+            ariaLabel="Reference click behavior"
+            value={referenceClickMode}
+            options={REFERENCE_MODE_OPTIONS}
+            placeholder="Select mode"
+            selectedIndicator={
+              <Icon code="check" size={12} aria-hidden="true" />
+            }
             title="Choose what Cmd/Ctrl-click does in editors"
-          >
-            <span className="cw-toolbar__select-label">Mode: </span>
-            <select
-              className="cw-toolbar__select"
-              value={referenceClickMode}
-              onChange={(event) =>
-                onReferenceClickModeChange(
-                  event.target.value as ReferenceClickMode,
-                )
-              }
-              aria-label="Reference click behavior"
-            >
-              <option value="followReference">Follow reference</option>
-              <option value="projectUsages">Project usages</option>
-            </select>
-          </label>
+            onValueChange={onReferenceClickModeChange}
+          />
         </div>
         <div
           className="cw-toolbar__group"
@@ -148,19 +161,15 @@ export function Toolbar({
               aria-hidden="true"
             />
           </ToolbarIconButton>
-          <ToolbarIconButton
-            className="cw-toolbar__icon-button"
-            onClick={onLoadLayout}
-            aria-label="Load a saved layout"
-            tooltip="Load layout"
-          >
-            <Icon
-              code="load-layout"
-              width={14}
-              height={14}
-              aria-hidden="true"
-            />
-          </ToolbarIconButton>
+          <BaseSelect<string>
+            label="Layouts"
+            ariaLabel="Saved layouts"
+            value={null}
+            options={layoutOptions}
+            placeholder={savedLayouts.length > 0 ? "Load" : "Empty"}
+            disabled={savedLayouts.length === 0}
+            onValueChange={onLoadLayout}
+          />
           <ToolbarIconButton
             className="cw-toolbar__icon-button"
             onClick={onSaveLayout}
@@ -293,6 +302,7 @@ export function Toolbar({
               <button
                 type="button"
                 onClick={onCloseShortcuts}
+                className="cw-ui-button"
                 title="Close shortcuts dialog"
                 aria-label="Close keyboard shortcuts"
               >

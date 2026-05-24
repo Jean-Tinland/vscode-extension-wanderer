@@ -600,7 +600,6 @@ export const EditorNode = memo(function EditorNode({
                     automaticLayout: true,
                     scrollBeyondLastLine: false,
                     fixedOverflowWidgets: false,
-                    minimap: { enabled: false },
                     inlineSuggest: { enabled: true },
                   }}
                 />
@@ -883,7 +882,9 @@ function applyOpenedTargetsNavigation(
   );
   if (opened.length === 0) return;
 
-  const openedNodeIds = Array.from(new Set(opened.map((result) => result.nodeId)));
+  const openedNodeIds = Array.from(
+    new Set(opened.map((result) => result.nodeId)),
+  );
 
   if (openedNodeIds.length === 1) {
     focusGraphNode(openedNodeIds[0]);

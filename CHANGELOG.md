@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.5 - Sun, May 24 2026
+
+- feat: enhance canvas functionality and layout management + add base ui basic design system
+
 ## 0.1.4 - Sat, May 23 2026
 
 - docs: update README.md for improved description and add preview image

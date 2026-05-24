@@ -20,8 +20,7 @@ export function pushEditorSettings(settings: EditorSettings): void {
     insertSpaces: settings.insertSpaces,
     wordWrap: settings.wordWrap,
     wordWrapColumn: settings.wordWrapColumn,
-    // Minimap is forced off on the canvas (nodes are small).
-    minimap: { enabled: false },
+    minimap: { enabled: settings.minimap },
     renderWhitespace: settings.renderWhitespace,
     cursorStyle: cursorStyleFromName(settings.cursorStyle),
     cursorBlinking: settings.cursorBlinking as EditorOptions["cursorBlinking"],

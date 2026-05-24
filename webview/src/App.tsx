@@ -4,6 +4,7 @@ import type {
   CanvasEdge,
   CanvasNode,
   EditorBufferSnapshot,
+  SavedLayoutSummary,
 } from "@shared/protocol";
 import { Canvas } from "./canvas/Canvas";
 import {
@@ -26,7 +27,6 @@ import {
 } from "./navigation/events";
 import { useGraphStore } from "./state/graphStore";
 import {
-  REFERENCE_CLICK_MODES,
   type ReferenceClickMode,
   useInteractionStore,
 } from "./state/interactionStore";
@@ -54,10 +54,7 @@ type LayoutBuffers = Record<string, EditorBufferSnapshot> | undefined;
 interface AppPersistedState {
   onboardingSeen?: boolean;
   onboardingDismissed?: boolean;
-  referenceClickMode?: ReferenceClickMode;
 }
-
-const REFERENCE_CLICK_MODE_SET = new Set<string>(REFERENCE_CLICK_MODES);
 
 export function App() {
   const hydrate = useGraphStore((s) => s.hydrate);
@@ -87,6 +84,7 @@ export function App() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showNodeSwitcher, setShowNodeSwitcher] = useState(false);
   const [showProblems, setShowProblems] = useState(false);
+  const [savedLayouts, setSavedLayouts] = useState<SavedLayoutSummary[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(() => {
     const state = readWebviewState<AppPersistedState>();
     return (
@@ -168,8 +166,8 @@ export function App() {
     postToExtension({ type: "requestSaveNamedLayout" });
   }, []);
 
-  const loadLayout = useCallback(() => {
-    postToExtension({ type: "requestLoadNamedLayout" });
+  const loadLayout = useCallback((name: string) => {
+    postToExtension({ type: "loadNamedLayout", name });
   }, []);
 
   const zoomToFit = useCallback(() => {
@@ -198,7 +196,12 @@ export function App() {
   }, []);
 
   const closeFocusedNode = useCallback(() => {
-    const focusedNodeId = useGraphStore.getState().focusedNodeId;
+    const graph = useGraphStore.getState();
+    if (graph.nodes.length === 0) {
+      postToExtension({ type: "requestCloseCanvasTab" });
+      return;
+    }
+    const focusedNodeId = graph.focusedNodeId;
     if (!focusedNodeId) return;
     removeNode(focusedNodeId);
   }, [removeNode]);
@@ -229,12 +232,17 @@ export function App() {
   const setReferenceClickModeAction = useCallback(
     (mode: ReferenceClickMode) => {
       setReferenceClickMode(mode);
+      postToExtension({ type: "setReferenceClickMode", mode });
     },
     [setReferenceClickMode],
   );
 
   const toggleReferenceClickModeAction = useCallback(() => {
     toggleReferenceClickMode();
+    postToExtension({
+      type: "setReferenceClickMode",
+      mode: useInteractionStore.getState().referenceClickMode,
+    });
   }, [toggleReferenceClickMode]);
 
   const handleCanvasCommand = useCallback(
@@ -413,17 +421,6 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    const persisted = readWebviewState<AppPersistedState>();
-    const mode = persisted?.referenceClickMode;
-    if (!mode || !REFERENCE_CLICK_MODE_SET.has(mode)) return;
-    setReferenceClickMode(mode);
-  }, [setReferenceClickMode]);
-
-  useEffect(() => {
-    patchWebviewState({ referenceClickMode });
-  }, [referenceClickMode]);
-
-  useEffect(() => {
     const unsubscribe = onExtensionMessage((msg) => {
       if (msg.type === "init") {
         if (msg.theme) queueMonacoTheme(msg.theme);
@@ -431,6 +428,8 @@ export function App() {
           setEditorSettings(msg.editorSettings);
           pushEditorSettings(msg.editorSettings);
         }
+        setSavedLayouts(msg.savedLayouts);
+        setReferenceClickMode(msg.referenceClickMode);
         if (msg.settings) setSettings(msg.settings);
         if (msg.layout) {
           rememberLayoutBuffers(msg.layout.buffers);
@@ -441,6 +440,8 @@ export function App() {
       } else if (msg.type === "editorSettingsChanged") {
         setEditorSettings(msg.editorSettings);
         pushEditorSettings(msg.editorSettings);
+      } else if (msg.type === "savedLayoutsChanged") {
+        setSavedLayouts(msg.layouts);
       } else if (msg.type === "diagnostics") {
         useDiagnosticsStore.getState().setDiagnostics(msg.uri, msg.markers);
       } else if (msg.type === "openFileResult") {
@@ -491,6 +492,7 @@ export function App() {
     setSettings,
     upsertNode,
     setEditorSettings,
+    setReferenceClickMode,
   ]);
 
   useEffect(() => {
@@ -644,6 +646,7 @@ export function App() {
         zoom={zoom}
         snapToGrid={snapToGrid}
         referenceClickMode={referenceClickMode}
+        savedLayouts={savedLayouts}
         showShortcuts={showShortcuts}
         showProblems={showProblems}
         shortcuts={shortcutHints}

@@ -74,8 +74,8 @@ const SHORTCUTS: ShortcutBinding[] = [
   {
     id: "closeFocusedNode",
     label: "Close focused node",
-    mac: "Cmd+Alt+X",
-    windows: "Ctrl+Alt+X",
+    mac: "Cmd+W",
+    windows: "Ctrl+W",
   },
   {
     id: "toggleFocusedNodeSize",

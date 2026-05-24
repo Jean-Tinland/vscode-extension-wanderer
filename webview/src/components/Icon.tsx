@@ -1,7 +1,9 @@
 import {
+  RiArrowDownSLine,
   RiArrowLeftRightLine,
   RiArrowLeftSLine,
   RiArrowRightSLine,
+  RiCheckLine,
   RiCloseLine,
   RiCollapseDiagonal2Line,
   RiErrorWarningLine,
@@ -21,6 +23,8 @@ import {
 import type { ComponentPropsWithoutRef } from "react";
 
 export type IconCode =
+  | "check"
+  | "chevron-down"
   | "close"
   | "external-link"
   | "sparkle"
@@ -49,6 +53,8 @@ type IconProps = Omit<RemixIconProps, "size"> & {
 };
 
 const ICON_COMPONENTS: Record<IconCode, RemixiconComponentType> = {
+  check: RiCheckLine,
+  "chevron-down": RiArrowDownSLine,
   close: RiCloseLine,
   "external-link": RiExternalLinkLine,
   sparkle: RiSparklingLine,
