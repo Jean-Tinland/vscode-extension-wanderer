@@ -1,0 +1,47 @@
+:global(:root) {
+  color-scheme: dark light;
+  font-family: var(--vscode-font-family, system-ui, sans-serif);
+  --surface: var(--vscode-editorWidget-background, #252526);
+  --border: var(--vscode-editorWidget-border, #454545);
+  --text: var(--vscode-foreground, #ccc);
+  --muted: var(--vscode-descriptionForeground, #aaa);
+  --secondary-button-background: var(
+    --vscode-button-secondaryBackground,
+    #2d2d2d
+  );
+  --secondary-button-foreground: var(
+    --vscode-button-secondaryForeground,
+    #ddd
+  );
+  --secondary-button-hover-background: var(
+    --vscode-button-secondaryHoverBackground,
+    #3a3a3a
+  );
+  --input-border: var(--vscode-input-border, #444);
+  --panel-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  --divider-color: color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+:global(html),
+:global(body),
+:global(#root) {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--vscode-editor-background, #1e1e1e);
+  color: var(--vscode-editor-foreground, #ddd);
+  overflow: hidden;
+}
+
+:global(:where(button, input, textarea, [role="button"]):focus-visible) {
+  outline: 2px solid var(--vscode-focusBorder, #007acc);
+  outline-offset: 2px;
+}
+
+.icon {
+  width: 14px;
+  height: 14px;
+  display: block;
+  fill: currentColor;
+}

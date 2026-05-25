@@ -13,6 +13,7 @@
     "@monaco-editor/react": "^4.7.0",
     "@remixicon/react": "^4.9.0",
     "@shikijs/monaco": "^4.1.0",
+    "classnames": "^2.5.1",
     "esbuild": "0.28.0",
     "monaco-editor": "^0.55.1",
     "react": "^19.2.6",

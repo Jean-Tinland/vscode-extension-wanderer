@@ -15,9 +15,9 @@ export interface ZoomToFitNodesOptions {
   duration?: number;
 }
 
-const FOCUS_NODE_EVENT = "cw:focusNode";
-const ZOOM_TO_FIT_EVENT = "cw:zoomToFit";
-const FIT_NODES_EVENT = "cw:fitNodes";
+const FOCUS_NODE_EVENT = "wanderer:focusNode";
+const ZOOM_TO_FIT_EVENT = "wanderer:zoomToFit";
+const FIT_NODES_EVENT = "wanderer:fitNodes";
 
 export function emitFocusNode(detail: FocusNodeEventDetail): void {
   window.dispatchEvent(

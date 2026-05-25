@@ -1,4 +1,5 @@
 import Editor, { type OnMount } from "@monaco-editor/react";
+import classNames from "classnames";
 import type * as Monaco from "monaco-editor";
 import {
   memo,
@@ -55,6 +56,8 @@ import {
   updateCachedFileFromHost,
   updateCachedFileFromModel,
 } from "./editorBufferStore";
+import { DOM_SELECTORS } from "../domHooks";
+import styles from "../styles/canvas.module.css";
 
 export interface EditorNodeData {
   nodeId: string;
@@ -115,7 +118,7 @@ export const EditorNode = memo(function EditorNode({
 
       if (isFocusedNode) return;
       if (!(event.target instanceof Element)) return;
-      if (!event.target.closest(".cw-node__interaction-guard")) return;
+      if (!event.target.closest(DOM_SELECTORS.nodeInteractionGuard)) return;
 
       emitFocusNode({ nodeId, recordHistory: false, preserveZoom: true });
     },
@@ -350,7 +353,7 @@ export const EditorNode = memo(function EditorNode({
           {
             range,
             options: {
-              inlineClassName: "cw-editor__modifier-link",
+              inlineClassName: styles.editorModifierLink,
             },
           },
         ]);
@@ -481,16 +484,20 @@ export const EditorNode = memo(function EditorNode({
     <>
       <ResizeEdges nodeId={nodeId} />
       <div
-        className={`cw-node${isFocusedNode ? " cw-node--focused" : ""}`}
+        className={classNames(
+          styles.node,
+          isFocusedNode && styles.nodeFocused,
+        )}
         onMouseDownCapture={onNodeMouseDownCapture}
+        data-node-focused={isFocusedNode ? "true" : undefined}
       >
         <Handle type="target" position={Position.Left} style={{ opacity: 0 }} />
-        <header className="cw-node__header">
-          <span className="cw-node__title" title={fileUri}>
-            <span className="cw-node__title-text">{shortName(fileUri)}</span>
+        <header className={styles.nodeHeader} data-node-drag-handle="true">
+          <span className={styles.nodeTitle} title={fileUri}>
+            <span className={styles.nodeTitleText}>{shortName(fileUri)}</span>
             {isDirty ? (
               <span
-                className="cw-node__dirty"
+                className={styles.nodeDirty}
                 title="Unsaved changes"
                 aria-label="Unsaved changes"
               >
@@ -499,22 +506,37 @@ export const EditorNode = memo(function EditorNode({
             ) : null}
             {diagnostics && diagnostics.counts.total > 0 ? (
               <span
-                className="cw-node__diagnostics"
+                className={styles.nodeDiagnostics}
                 title={`${diagnostics.counts.errors} errors, ${diagnostics.counts.warnings} warnings, ${diagnostics.counts.infos} info, ${diagnostics.counts.hints} hints`}
               >
                 {diagnostics.counts.errors > 0 ? (
-                  <span className="cw-node__diag-badge cw-node__diag-badge--error">
+                  <span
+                    className={classNames(
+                      styles.nodeDiagBadge,
+                      styles.nodeDiagBadgeError,
+                    )}
+                  >
                     E {diagnostics.counts.errors}
                   </span>
                 ) : null}
                 {diagnostics.counts.warnings > 0 ? (
-                  <span className="cw-node__diag-badge cw-node__diag-badge--warning">
+                  <span
+                    className={classNames(
+                      styles.nodeDiagBadge,
+                      styles.nodeDiagBadgeWarning,
+                    )}
+                  >
                     W {diagnostics.counts.warnings}
                   </span>
                 ) : null}
                 {diagnostics.counts.errors === 0 &&
                 diagnostics.counts.warnings === 0 ? (
-                  <span className="cw-node__diag-badge cw-node__diag-badge--info">
+                  <span
+                    className={classNames(
+                      styles.nodeDiagBadge,
+                      styles.nodeDiagBadgeInfo,
+                    )}
+                  >
                     I {diagnostics.counts.infos + diagnostics.counts.hints}
                   </span>
                 ) : null}
@@ -522,7 +544,7 @@ export const EditorNode = memo(function EditorNode({
             ) : null}
           </span>
           <div
-            className="cw-node__actions nodrag nopan"
+            className={classNames(styles.nodeActions, "nodrag", "nopan")}
             role="group"
             aria-label="Node actions"
           >
@@ -535,7 +557,11 @@ export const EditorNode = memo(function EditorNode({
             >
               <button
                 type="button"
-                className="cw-node__icon-button nodrag nopan"
+                className={classNames(
+                  styles.nodeIconButton,
+                  "nodrag",
+                  "nopan",
+                )}
                 onPointerDown={preventHeaderActionDrag}
                 onClick={toggleSize}
                 title={isExpandedSize ? "Restore size" : "Expand size"}
@@ -556,7 +582,11 @@ export const EditorNode = memo(function EditorNode({
             <Tooltip label="Open on the side in a native editor">
               <button
                 type="button"
-                className="cw-node__icon-button nodrag nopan"
+                className={classNames(
+                  styles.nodeIconButton,
+                  "nodrag",
+                  "nopan",
+                )}
                 onPointerDown={preventHeaderActionDrag}
                 onClick={openInWorkbench}
                 aria-label="Open this file in a native editor"
@@ -572,7 +602,11 @@ export const EditorNode = memo(function EditorNode({
             <Tooltip label="Close this node">
               <button
                 type="button"
-                className="cw-node__icon-button nodrag nopan"
+                className={classNames(
+                  styles.nodeIconButton,
+                  "nodrag",
+                  "nopan",
+                )}
                 onPointerDown={preventHeaderActionDrag}
                 onClick={closeThisNode}
                 title="Close"
@@ -583,11 +617,21 @@ export const EditorNode = memo(function EditorNode({
             </Tooltip>
           </div>
         </header>
-        <div className="cw-node__body">
-          <div className="cw-node__interaction-guard nowheel nokey">
+        <div className={styles.nodeBody}>
+          <div
+            className={classNames(
+              styles.nodeInteractionGuard,
+              "nowheel",
+              "nokey",
+            )}
+            data-node-interaction-guard="true"
+          >
             {file && monacoReady ? (
               <div
-                className={`cw-node__editor-wrap${decolorize ? " cw-node__editor-wrap--plain" : ""}`}
+                className={classNames(
+                  styles.nodeEditorWrap,
+                  decolorize && styles.nodeEditorWrapPlain,
+                )}
               >
                 <Editor
                   defaultLanguage={toMonacoLanguageId(file.languageId)}
@@ -605,7 +649,7 @@ export const EditorNode = memo(function EditorNode({
                 />
                 {decolorize ? (
                   <div
-                    className="cw-node__zoom-path"
+                    className={styles.nodeZoomPath}
                     style={{ fontSize: `${zoomPathLabelFontSize}px` }}
                     title={fileUri}
                     aria-hidden="true"
@@ -666,7 +710,7 @@ export const EditorNode = memo(function EditorNode({
                 )}
               </div>
             ) : (
-              <pre className="cw-preview">Loading…</pre>
+              <pre className={styles.preview}>Loading…</pre>
             )}
           </div>
         </div>

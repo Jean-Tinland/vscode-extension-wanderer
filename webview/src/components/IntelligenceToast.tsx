@@ -1,4 +1,5 @@
 import type { IntelligenceTimeoutNotice } from "../state/intelligenceStore";
+import styles from "../styles/overlays.module.css";
 
 interface IntelligenceToastProps {
   notice: IntelligenceTimeoutNotice | null;
@@ -14,11 +15,11 @@ export function IntelligenceToast({
   if (!notice) return null;
 
   return (
-    <div className="cw-intel-toast" role="status" aria-live="polite">
-      <div className="cw-intel-toast__text">
+    <div className={styles.intelToast} role="status" aria-live="polite">
+      <div className={styles.intelToastText}>
         <strong>Language service:</strong> {notice.message}
       </div>
-      <div className="cw-intel-toast__actions">
+      <div className={styles.intelToastActions}>
         {notice.canRetry ? (
           <button
             type="button"

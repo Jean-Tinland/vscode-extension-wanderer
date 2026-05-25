@@ -1,5 +1,7 @@
+import classNames from "classnames";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDialogFocusTrap } from "../hooks/useDialogFocusTrap";
+import styles from "../styles/overlays.module.css";
 
 export interface NodeSwitchItem {
   id: string;
@@ -59,10 +61,11 @@ export function NodeSwitcher({
 
   return (
     <div
-      className="cw-node-switcher"
+      className={styles.nodeSwitcher}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="cw-node-switcher-title"
+      aria-labelledby="node-switcher-title"
+      data-node-switcher="true"
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           event.preventDefault();
@@ -88,13 +91,13 @@ export function NodeSwitcher({
       }}
     >
       <div
-        className="cw-node-switcher__backdrop"
+        className={styles.nodeSwitcherBackdrop}
         aria-hidden="true"
         onClick={onClose}
       />
-      <div className="cw-node-switcher__panel" ref={panelRef} tabIndex={-1}>
-        <header className="cw-node-switcher__header">
-          <h2 id="cw-node-switcher-title">Switch node</h2>
+      <div className={styles.nodeSwitcherPanel} ref={panelRef} tabIndex={-1}>
+        <header className={styles.nodeSwitcherHeader}>
+          <h2 id="node-switcher-title">Switch node</h2>
           <button
             type="button"
             onClick={onClose}
@@ -104,22 +107,22 @@ export function NodeSwitcher({
             Close
           </button>
         </header>
-        <div className="cw-node-switcher__body">
+        <div className={styles.nodeSwitcherBody}>
           <input
             autoFocus
-            className="cw-node-switcher__input"
+            className={styles.nodeSwitcherInput}
             placeholder="Type file name or path"
             aria-label="Filter open nodes"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
           <div
-            className="cw-node-switcher__list"
+            className={styles.nodeSwitcherList}
             role="list"
             aria-label="Open nodes"
           >
             {filtered.length === 0 ? (
-              <p className="cw-node-switcher__empty">No matching nodes</p>
+              <p className={styles.nodeSwitcherEmpty}>No matching nodes</p>
             ) : (
               filtered.map((node, idx) => {
                 const active = idx === activeIndex;
@@ -127,16 +130,19 @@ export function NodeSwitcher({
                   <button
                     key={node.id}
                     type="button"
-                    className={`cw-node-switcher__item${active ? " cw-node-switcher__item--active" : ""}`}
+                    className={classNames(
+                      styles.nodeSwitcherItem,
+                      active && styles.nodeSwitcherItemActive,
+                    )}
                     aria-current={active ? "true" : undefined}
                     onMouseEnter={() => setActiveIndex(idx)}
                     onClick={() => onSelect(node.id)}
                     title={node.fileUri}
                   >
-                    <span className="cw-node-switcher__item-title">
+                    <span className={styles.nodeSwitcherItemTitle}>
                       {shortName(node.fileUri)}
                     </span>
-                    <span className="cw-node-switcher__item-path">
+                    <span className={styles.nodeSwitcherItemPath}>
                       {node.fileUri}
                     </span>
                   </button>

@@ -1,3 +1,4 @@
+import classNames from "classnames";
 import { type ComponentPropsWithoutRef, type ReactNode, useRef } from "react";
 import type { SavedLayoutSummary } from "@shared/protocol";
 import type { ShortcutHint } from "../keyboard/shortcuts";
@@ -7,6 +8,13 @@ import { BaseMenu, type BaseMenuOption } from "./BaseMenu";
 import { BaseSelect, type BaseSelectOption } from "./BaseSelect";
 import { Icon } from "./Icon";
 import { Tooltip } from "./Tooltip";
+import designStyles from "../styles/design-system.module.css";
+import toolbarStyles from "../styles/toolbar.module.css";
+
+const styles: Record<string, string> = {
+  ...designStyles,
+  ...toolbarStyles,
+};
 
 interface ToolbarProps {
   nodeCount: number;
@@ -49,9 +57,11 @@ function ToolbarIconButton({
   children,
   ...buttonProps
 }: ToolbarIconButtonProps) {
-  const className = buttonProps.className
-    ? `cw-ui-button cw-ui-icon-button ${buttonProps.className}`
-    : "cw-ui-button cw-ui-icon-button";
+  const className = classNames(
+    styles.uiButton,
+    styles.uiIconButton,
+    buttonProps.className,
+  );
 
   return (
     <Tooltip label={tooltip}>
@@ -109,9 +119,14 @@ export function Toolbar({
 
   return (
     <>
-      <div className="cw-toolbar" role="toolbar" aria-label="Wanderer tools">
+      <div
+        className={styles.toolbar}
+        role="toolbar"
+        aria-label="Wanderer tools"
+        data-toolbar="true"
+      >
         <div
-          className="cw-toolbar__group"
+          className={styles.toolbarGroup}
           role="group"
           aria-label="Reference click behavior"
         >
@@ -129,12 +144,12 @@ export function Toolbar({
           />
         </div>
         <div
-          className="cw-toolbar__group"
+          className={styles.toolbarGroup}
           role="group"
           aria-label="File actions"
         >
           <ToolbarIconButton
-            className="cw-toolbar__icon-button"
+            className={styles.toolbarIconButton}
             onClick={onOpenFile}
             aria-label="Open file on canvas"
             tooltip="Open file"
@@ -142,7 +157,7 @@ export function Toolbar({
             <Icon code="open-file" width={14} height={14} aria-hidden="true" />
           </ToolbarIconButton>
           <ToolbarIconButton
-            className="cw-toolbar__icon-button"
+            className={styles.toolbarIconButton}
             onClick={onOpenManyFiles}
             aria-label="Open multiple files on canvas"
             tooltip="Open many"
@@ -150,7 +165,7 @@ export function Toolbar({
             <Icon code="open-many" width={14} height={14} aria-hidden="true" />
           </ToolbarIconButton>
           <ToolbarIconButton
-            className="cw-toolbar__icon-button"
+            className={styles.toolbarIconButton}
             onClick={onOpenNodeSwitcher}
             aria-label="Switch to an open node"
             tooltip="Switch node"
@@ -163,16 +178,15 @@ export function Toolbar({
             />
           </ToolbarIconButton>
           <BaseMenu<string>
-            label="Layouts"
+            label="Load layout"
             ariaLabel="Saved layouts"
-            triggerValue={savedLayouts.length > 0 ? "Load" : "Empty"}
             options={layoutMenuOptions}
             emptyStateLabel="No saved layouts yet."
             title="Load a saved layout"
             onSelect={onLoadLayout}
           />
           <ToolbarIconButton
-            className="cw-toolbar__icon-button"
+            className={styles.toolbarIconButton}
             onClick={onSaveLayout}
             aria-label="Save current layout"
             tooltip="Save layout"
@@ -187,12 +201,12 @@ export function Toolbar({
         </div>
 
         <div
-          className="cw-toolbar__group"
+          className={styles.toolbarGroup}
           role="group"
           aria-label="View actions"
         >
           <ToolbarIconButton
-            className="cw-toolbar__icon-button"
+            className={styles.toolbarIconButton}
             onClick={onZoomToFit}
             aria-label="Zoom to fit all nodes"
             tooltip="Zoom to fit"
@@ -200,7 +214,7 @@ export function Toolbar({
             <Icon code="zoom-fit" width={14} height={14} aria-hidden="true" />
           </ToolbarIconButton>
           <ToolbarIconButton
-            className="cw-toolbar__icon-button"
+            className={styles.toolbarIconButton}
             onClick={onPreviousNode}
             aria-label="Cycle to previous node"
             tooltip="Previous node"
@@ -209,7 +223,7 @@ export function Toolbar({
             <Icon code="prev-node" width={14} height={14} aria-hidden="true" />
           </ToolbarIconButton>
           <ToolbarIconButton
-            className="cw-toolbar__icon-button"
+            className={styles.toolbarIconButton}
             onClick={onNextNode}
             aria-label="Cycle to next node"
             tooltip="Next node"
@@ -218,7 +232,10 @@ export function Toolbar({
             <Icon code="next-node" width={14} height={14} aria-hidden="true" />
           </ToolbarIconButton>
           <ToolbarIconButton
-            className={`cw-toolbar__icon-button${snapToGrid ? " cw-toolbar__button--active" : ""}`}
+            className={classNames(
+              styles.toolbarIconButton,
+              snapToGrid && styles.toolbarButtonActive,
+            )}
             onClick={onToggleSnapToGrid}
             aria-label={
               snapToGrid ? "Disable snap to grid" : "Enable snap to grid"
@@ -229,7 +246,10 @@ export function Toolbar({
             <Icon code="snap-grid" width={14} height={14} aria-hidden="true" />
           </ToolbarIconButton>
           <ToolbarIconButton
-            className={`cw-toolbar__icon-button${showProblems ? " cw-toolbar__button--active" : ""}`}
+            className={classNames(
+              styles.toolbarIconButton,
+              showProblems && styles.toolbarButtonActive,
+            )}
             onClick={onToggleProblems}
             aria-label={
               showProblems ? "Hide problems panel" : "Show problems panel"
@@ -241,23 +261,33 @@ export function Toolbar({
           </ToolbarIconButton>
         </div>
 
-        <div className="cw-toolbar__status" aria-label="Canvas status">
-          <span className="cw-toolbar__chip" title="Open nodes on canvas">
+        <div className={styles.toolbarStatus} aria-label="Canvas status">
+          <span className={styles.toolbarChip} title="Open nodes on canvas">
             Nodes {nodeCount}
           </span>
           <span
-            className={`cw-toolbar__chip${errorCount > 0 ? " cw-toolbar__chip--error" : warningCount > 0 ? " cw-toolbar__chip--warning" : ""}`}
+            className={classNames(
+              styles.toolbarChip,
+              errorCount > 0
+                ? styles.toolbarChipError
+                : warningCount > 0
+                  ? styles.toolbarChipWarning
+                  : undefined,
+            )}
             title="Diagnostics in open nodes"
           >
             Issues {problemCount}
           </span>
-          <span className="cw-toolbar__chip" title="Current zoom level">
+          <span className={styles.toolbarChip} title="Current zoom level">
             Zoom {Math.round(zoom * 100)}%
           </span>
         </div>
 
         <ToolbarIconButton
-          className="cw-toolbar__shortcuts cw-toolbar__icon-button"
+          className={classNames(
+            styles.toolbarShortcuts,
+            styles.toolbarIconButton,
+          )}
           onClick={onToggleOnboarding}
           aria-label={
             showOnboarding ? "Hide onboarding tips" : "Show onboarding tips"
@@ -270,7 +300,10 @@ export function Toolbar({
         </ToolbarIconButton>
 
         <ToolbarIconButton
-          className="cw-toolbar__shortcuts cw-toolbar__icon-button"
+          className={classNames(
+            styles.toolbarShortcuts,
+            styles.toolbarIconButton,
+          )}
           onClick={onToggleShortcuts}
           aria-label="Show keyboard shortcuts"
           tooltip="Keyboard shortcuts"
@@ -283,38 +316,39 @@ export function Toolbar({
 
       {showShortcuts ? (
         <div
-          className="cw-shortcuts"
+          className={styles.shortcuts}
           role="dialog"
           aria-modal="true"
-          aria-labelledby="cw-shortcuts-title"
+          aria-labelledby="shortcuts-title"
+          data-shortcuts="true"
         >
           <div
-            className="cw-shortcuts__backdrop"
+            className={styles.shortcutsBackdrop}
             aria-hidden="true"
             onClick={onCloseShortcuts}
           />
           <div
-            className="cw-shortcuts__panel"
+            className={styles.shortcutsPanel}
             ref={shortcutsPanelRef}
             tabIndex={-1}
           >
-            <header className="cw-shortcuts__header">
-              <h2 id="cw-shortcuts-title">Keyboard shortcuts</h2>
+            <header className={styles.shortcutsHeader}>
+              <h2 id="shortcuts-title">Keyboard shortcuts</h2>
               <button
                 type="button"
                 onClick={onCloseShortcuts}
-                className="cw-ui-button"
+                className={styles.uiButton}
                 title="Close shortcuts dialog"
                 aria-label="Close keyboard shortcuts"
               >
                 Close
               </button>
             </header>
-            <div className="cw-shortcuts__list" role="list">
+            <div className={styles.shortcutsList} role="list">
               {shortcuts.map((shortcut) => (
                 <div
                   key={shortcut.id}
-                  className="cw-shortcuts__row"
+                  className={styles.shortcutsRow}
                   role="listitem"
                 >
                   <span>{shortcut.label}</span>

@@ -5,6 +5,11 @@ import path from "node:path";
 export default defineConfig({
   plugins: [react()],
   base: "./",
+  css: {
+    modules: {
+      localsConvention: "camelCaseOnly",
+    },
+  },
   resolve: {
     alias: {
       "@shared": path.resolve(__dirname, "../shared"),

@@ -1,6 +1,8 @@
+import classNames from "classnames";
 import { useRef } from "react";
 import type { DiagnosticData } from "@shared/protocol";
 import { useDialogFocusTrap } from "../hooks/useDialogFocusTrap";
+import styles from "../styles/overlays.module.css";
 
 export interface ProblemItem {
   id: string;
@@ -20,6 +22,16 @@ interface ProblemsPanelProps {
   onSelectProblem: (item: ProblemItem) => void;
 }
 
+const severityModifierClassName: Record<
+  ReturnType<typeof severityClass>,
+  string
+> = {
+  error: styles.problemsSeverityError,
+  warning: styles.problemsSeverityWarning,
+  info: styles.problemsSeverityInfo,
+  hint: styles.problemsSeverityHint,
+};
+
 export function ProblemsPanel({
   open,
   errorCount,
@@ -38,28 +50,39 @@ export function ProblemsPanel({
 
   return (
     <div
-      className="cw-problems"
+      className={styles.problems}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="cw-problems-title"
+      aria-labelledby="problems-title"
+      data-problems="true"
     >
       <div
-        className="cw-problems__backdrop"
+        className={styles.problemsBackdrop}
         aria-hidden="true"
         onClick={onClose}
       />
-      <div className="cw-problems__panel" ref={panelRef} tabIndex={-1}>
-        <header className="cw-problems__header">
-          <h2 id="cw-problems-title">Problems in canvas</h2>
-          <div className="cw-problems__summary">
-            <span className="cw-problems__chip cw-problems__chip--error">
+      <div className={styles.problemsPanel} ref={panelRef} tabIndex={-1}>
+        <header className={styles.problemsHeader}>
+          <h2 id="problems-title">Problems in canvas</h2>
+          <div className={styles.problemsSummary}>
+            <span
+              className={classNames(
+                styles.problemsChip,
+                styles.problemsChipError,
+              )}
+            >
               Errors {errorCount}
             </span>
-            <span className="cw-problems__chip cw-problems__chip--warning">
+            <span
+              className={classNames(
+                styles.problemsChip,
+                styles.problemsChipWarning,
+              )}
+            >
               Warnings {warningCount}
             </span>
-            <span className="cw-problems__chip">Info {infoCount}</span>
-            <span className="cw-problems__chip">Hints {hintCount}</span>
+            <span className={styles.problemsChip}>Info {infoCount}</span>
+            <span className={styles.problemsChip}>Hints {hintCount}</span>
           </div>
           <button
             type="button"
@@ -71,35 +94,43 @@ export function ProblemsPanel({
           </button>
         </header>
 
-        <div className="cw-problems__body">
+        <div className={styles.problemsBody}>
           {items.length === 0 ? (
-            <p className="cw-problems__empty">No diagnostics in open nodes.</p>
+            <p className={styles.problemsEmpty}>
+              No diagnostics in open nodes.
+            </p>
           ) : (
-            <div className="cw-problems__list" role="list">
-              {items.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className="cw-problems__item"
-                  onClick={() => onSelectProblem(item)}
-                  role="listitem"
-                  title="Focus node"
-                  aria-label={`Focus ${shortName(item.fileUri)} at line ${item.marker.startLine + 1}`}
-                >
-                  <span
-                    className={`cw-problems__severity cw-problems__severity--${severityClass(item.marker.severity)}`}
+            <div className={styles.problemsList} role="list">
+              {items.map((item) => {
+                const severity = severityClass(item.marker.severity);
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={styles.problemsItem}
+                    onClick={() => onSelectProblem(item)}
+                    role="listitem"
+                    title="Focus node"
+                    aria-label={`Focus ${shortName(item.fileUri)} at line ${item.marker.startLine + 1}`}
                   >
-                    {severityLabel(item.marker.severity)}
-                  </span>
-                  <span className="cw-problems__message">
-                    {item.marker.message}
-                  </span>
-                  <span className="cw-problems__meta">
-                    {shortName(item.fileUri)}:{item.marker.startLine + 1}:
-                    {item.marker.startCharacter + 1}
-                  </span>
-                </button>
-              ))}
+                    <span
+                      className={classNames(
+                        styles.problemsSeverity,
+                        severityModifierClassName[severity],
+                      )}
+                    >
+                      {severityLabel(item.marker.severity)}
+                    </span>
+                    <span className={styles.problemsMessage}>
+                      {item.marker.message}
+                    </span>
+                    <span className={styles.problemsMeta}>
+                      {shortName(item.fileUri)}:{item.marker.startLine + 1}:
+                      {item.marker.startCharacter + 1}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

@@ -1,5 +1,6 @@
 import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 import type { ReactElement } from "react";
+import styles from "../styles/design-system.module.css";
 
 type TooltipPlacement = "top" | "bottom" | "left" | "right";
 
@@ -26,7 +27,9 @@ export function Tooltip({
         <BaseTooltip.Trigger render={children} />
         <BaseTooltip.Portal>
           <BaseTooltip.Positioner side={placement} sideOffset={8}>
-            <BaseTooltip.Popup className="cw-tooltip">{text}</BaseTooltip.Popup>
+            <BaseTooltip.Popup className={styles.tooltip}>
+              {text}
+            </BaseTooltip.Popup>
           </BaseTooltip.Positioner>
         </BaseTooltip.Portal>
       </BaseTooltip.Root>

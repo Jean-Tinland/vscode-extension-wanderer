@@ -12,6 +12,7 @@ import {
   postToExtension,
 } from "../bridge/vscode";
 import { Icon } from "../components/Icon";
+import styles from "../styles/canvas.module.css";
 
 interface InlineChatProps {
   fileUri: string;
@@ -144,18 +145,19 @@ export const InlineChat = memo(function InlineChat({
 
   return (
     <div
-      className="cw-inline-chat"
+      className={styles.inlineChat}
       style={positionStyle}
       onMouseDown={(e) => e.stopPropagation()}
       role="region"
       aria-label="Inline Copilot chat"
+      data-inline-chat="true"
     >
-      <div className="cw-inline-chat__header">
+      <div className={styles.inlineChatHeader}>
         <Icon code="sparkle" width={14} height={14} aria-hidden="true" />
-        <span className="cw-inline-chat__label">Copilot</span>
+        <span className={styles.inlineChatLabel}>Copilot</span>
         {streaming && (
           <span
-            className="cw-inline-chat__spinner"
+            className={styles.inlineChatSpinner}
             role="status"
             aria-live="polite"
             aria-label="Generating"
@@ -163,7 +165,7 @@ export const InlineChat = memo(function InlineChat({
         )}
         <button
           type="button"
-          className="cw-inline-chat__close"
+          className={styles.inlineChatClose}
           onClick={() => {
             cancelActiveRequest();
             onClose();
@@ -174,10 +176,10 @@ export const InlineChat = memo(function InlineChat({
           <Icon code="close" width={12} height={12} aria-hidden="true" />
         </button>
       </div>
-      <div className="cw-inline-chat__body">
+      <div className={styles.inlineChatBody}>
         <textarea
           ref={inputRef}
-          className="cw-inline-chat__input"
+          className={styles.inlineChatInput}
           placeholder="Ask Copilot to edit…"
           aria-label="Inline chat prompt"
           value={prompt}
@@ -188,7 +190,7 @@ export const InlineChat = memo(function InlineChat({
         />
         <button
           type="button"
-          className="cw-inline-chat__submit"
+          className={styles.inlineChatSubmit}
           onClick={handleSubmit}
           disabled={!prompt.trim() || streaming}
           title="Submit (Enter)"
@@ -197,8 +199,8 @@ export const InlineChat = memo(function InlineChat({
           <Icon code="send" width={14} height={14} aria-hidden="true" />
         </button>
       </div>
-      {preview && <pre className="cw-inline-chat__preview">{preview}</pre>}
-      {error && <div className="cw-inline-chat__error">{error}</div>}
+      {preview && <pre className={styles.inlineChatPreview}>{preview}</pre>}
+      {error && <div className={styles.inlineChatError}>{error}</div>}
     </div>
   );
 });

@@ -1,6 +1,8 @@
 import { Menu } from "@base-ui/react/menu";
+import classNames from "classnames";
 import type { ReactNode } from "react";
 import { Icon } from "./Icon";
+import styles from "../styles/design-system.module.css";
 
 export interface BaseMenuOption<Value extends string> {
   value: Value;
@@ -12,7 +14,6 @@ export interface BaseMenuOption<Value extends string> {
 interface BaseMenuProps<Value extends string> {
   label: ReactNode;
   ariaLabel: string;
-  triggerValue: ReactNode;
   options: BaseMenuOption<Value>[];
   onSelect: (value: Value) => void;
   emptyStateLabel?: ReactNode;
@@ -23,7 +24,6 @@ interface BaseMenuProps<Value extends string> {
 export function BaseMenu<Value extends string>({
   label,
   ariaLabel,
-  triggerValue,
   options,
   onSelect,
   emptyStateLabel = "No options available.",
@@ -33,36 +33,39 @@ export function BaseMenu<Value extends string>({
   return (
     <Menu.Root>
       <Menu.Trigger
-        className="cw-ui-button cw-ui-menu-trigger"
+        className={classNames(styles.uiButton, styles.uiMenuTrigger)}
         aria-label={ariaLabel}
         title={title}
         disabled={disabled}
       >
-        <span className="cw-ui-menu-trigger__label">{label}</span>
-        <span className="cw-ui-menu-trigger__value">{triggerValue}</span>
-        <span className="cw-ui-menu-trigger__caret" aria-hidden="true">
+        <span className={styles.uiMenuTriggerLabel}>{label}</span>
+        <span className={styles.uiMenuTriggerCaret} aria-hidden="true">
           <Icon code="chevron-down" size={12} aria-hidden="true" />
         </span>
       </Menu.Trigger>
       <Menu.Portal>
         <Menu.Positioner sideOffset={8} align="start">
-          <Menu.Popup className="cw-ui-menu-popup" aria-label={ariaLabel}>
+          <Menu.Popup className={styles.uiMenuPopup} aria-label={ariaLabel}>
             {options.length > 0 ? (
               options.map((option) => (
                 <Menu.Item
                   key={option.value}
-                  className="cw-ui-menu-item"
+                  className={styles.uiMenuItem}
                   disabled={option.disabled}
                   onClick={() => onSelect(option.value)}
                 >
-                  <span className="cw-ui-menu-item__label">{option.label}</span>
+                  <span className={styles.uiMenuItemLabel}>
+                    {option.label}
+                  </span>
                   {option.meta ? (
-                    <span className="cw-ui-menu-item__meta">{option.meta}</span>
+                    <span className={styles.uiMenuItemMeta}>
+                      {option.meta}
+                    </span>
                   ) : null}
                 </Menu.Item>
               ))
             ) : (
-              <div className="cw-ui-menu-empty">{emptyStateLabel}</div>
+              <div className={styles.uiMenuEmpty}>{emptyStateLabel}</div>
             )}
           </Menu.Popup>
         </Menu.Positioner>

@@ -1,7 +1,10 @@
+import classNames from "classnames";
 import { useCallback, useRef } from "react";
 import { useGraphStore } from "../state/graphStore";
 import { useInteractionStore } from "../state/interactionStore";
 import { useViewportStore } from "../state/viewportStore";
+import { DOM_SELECTORS } from "../domHooks";
+import styles from "../styles/canvas.module.css";
 
 const MIN_WIDTH = 280;
 const MIN_HEIGHT = 160;
@@ -31,7 +34,7 @@ export function ResizeEdges({ nodeId }: Props) {
       const node = useGraphStore.getState().findById(nodeId);
       if (!node) return;
 
-      const canvasRoot = e.currentTarget.closest(".cw-canvas");
+      const canvasRoot = e.currentTarget.closest(DOM_SELECTORS.canvas);
 
       activeRef.current = {
         startClientX: e.clientX,
@@ -106,35 +109,35 @@ export function ResizeEdges({ nodeId }: Props) {
   return (
     <>
       <div
-        className="cw-resize cw-resize--n"
+        className={classNames(styles.resize, styles.resizeN)}
         onMouseDown={(e) => begin("n", e)}
       />
       <div
-        className="cw-resize cw-resize--s"
+        className={classNames(styles.resize, styles.resizeS)}
         onMouseDown={(e) => begin("s", e)}
       />
       <div
-        className="cw-resize cw-resize--e"
+        className={classNames(styles.resize, styles.resizeE)}
         onMouseDown={(e) => begin("e", e)}
       />
       <div
-        className="cw-resize cw-resize--w"
+        className={classNames(styles.resize, styles.resizeW)}
         onMouseDown={(e) => begin("w", e)}
       />
       <div
-        className="cw-resize cw-resize--nw"
+        className={classNames(styles.resize, styles.resizeNw)}
         onMouseDown={(e) => begin("nw", e)}
       />
       <div
-        className="cw-resize cw-resize--ne"
+        className={classNames(styles.resize, styles.resizeNe)}
         onMouseDown={(e) => begin("ne", e)}
       />
       <div
-        className="cw-resize cw-resize--sw"
+        className={classNames(styles.resize, styles.resizeSw)}
         onMouseDown={(e) => begin("sw", e)}
       />
       <div
-        className="cw-resize cw-resize--se"
+        className={classNames(styles.resize, styles.resizeSe)}
         onMouseDown={(e) => begin("se", e)}
       />
     </>

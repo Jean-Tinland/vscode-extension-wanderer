@@ -20,7 +20,9 @@ import {
   RiSendPlaneLine,
   RiSparklingLine,
 } from "@remixicon/react";
+import classNames from "classnames";
 import type { ComponentPropsWithoutRef } from "react";
+import baseStyles from "../styles/base.module.css";
 
 export type IconCode =
   | "check"
@@ -82,7 +84,7 @@ export function Icon({
   height,
   ...props
 }: IconProps) {
-  const iconClassName = className ? `cw-icon ${className}` : "cw-icon";
+  const iconClassName = classNames(baseStyles.icon, className);
   const IconComponent = ICON_COMPONENTS[code];
   const resolvedSize = size ?? width ?? height;
 

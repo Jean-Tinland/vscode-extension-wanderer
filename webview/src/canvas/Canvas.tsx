@@ -8,6 +8,7 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import classNames from "classnames";
 import ReactFlow, {
   Background,
   Controls,
@@ -31,6 +32,9 @@ import { collectLayoutBuffers } from "../nodes/editorBufferStore";
 import type { EditorNodeData } from "../nodes/EditorNode";
 import { onFitNodes, onFocusNode, onZoomToFit } from "../navigation/events";
 import { onExtensionMessage, postToExtension } from "../bridge/vscode";
+import { DOM_SELECTORS } from "../domHooks";
+import styles from "../styles/canvas.module.css";
+import reactflowStyles from "../styles/reactflow.module.css";
 
 const LazyEditorNode = lazy(async () => {
   const module = await import("../nodes/EditorNode");
@@ -39,7 +43,7 @@ const LazyEditorNode = lazy(async () => {
 
 function LazyEditorNodeWrapper(props: NodeProps<EditorNodeData>) {
   return (
-    <Suspense fallback={<pre className="cw-preview">Loading…</pre>}>
+    <Suspense fallback={<pre className={styles.preview}>Loading…</pre>}>
       <LazyEditorNode {...props} />
     </Suspense>
   );
@@ -176,7 +180,7 @@ function CanvasInner() {
         position: { x: n.x, y: n.y },
         data: { nodeId: n.id, fileUri: n.fileUri },
         style: { width: n.width, height: n.height },
-        dragHandle: ".cw-node__header",
+        dragHandle: DOM_SELECTORS.nodeDragHandle,
         zIndex: n.id === focusedNodeId ? 1000 : 0,
       })),
     [focusedNodeId, nodes],
@@ -296,10 +300,10 @@ function CanvasInner() {
 
       const target = event.target;
       if (target instanceof Element) {
-        if (target.closest(".cw-node-switcher")) return;
-        if (target.closest(".cw-shortcuts")) return;
-        if (target.closest(".cw-onboarding")) return;
-        if (target.closest(".cw-problems")) return;
+        if (target.closest(DOM_SELECTORS.nodeSwitcher)) return;
+        if (target.closest(DOM_SELECTORS.shortcuts)) return;
+        if (target.closest(DOM_SELECTORS.onboarding)) return;
+        if (target.closest(DOM_SELECTORS.problems)) return;
       }
 
       if (useGraphStore.getState().focusedNodeId === null) return;
@@ -421,7 +425,8 @@ function CanvasInner() {
         const focusedNodeId = useGraphStore.getState().focusedNodeId;
         if (
           focusedNodeId !== null &&
-          (!(target instanceof Element) || !target.closest(".cw-node--focused"))
+          (!(target instanceof Element) ||
+            !target.closest(DOM_SELECTORS.focusedNode))
         ) {
           clearFocus();
         }
@@ -460,10 +465,15 @@ function CanvasInner() {
   return (
     <div
       ref={canvasRef}
-      className={`cw-canvas${panMode ? " cw-canvas--pan-mode" : ""}`}
+      className={classNames(
+        styles.canvas,
+        reactflowStyles.reactflowScope,
+        panMode && styles.canvasPanMode,
+      )}
       role="region"
       aria-label="Wanderer canvas"
       onPointerDownCapture={beginPanSession}
+      data-canvas="true"
     >
       <ReactFlow
         nodes={rfNodes}
@@ -494,10 +504,10 @@ function CanvasInner() {
           pannable
           zoomable
           ariaLabel="Wanderer canvas minimap"
-          nodeColor="var(--cw-minimap-node-color)"
-          nodeStrokeColor="var(--cw-minimap-node-stroke)"
-          maskColor="var(--cw-minimap-mask-color)"
-          maskStrokeColor="var(--cw-minimap-mask-stroke)"
+          nodeColor="var(--wanderer-minimap-node-color)"
+          nodeStrokeColor="var(--wanderer-minimap-node-stroke)"
+          maskColor="var(--wanderer-minimap-mask-color)"
+          maskStrokeColor="var(--wanderer-minimap-mask-stroke)"
           maskStrokeWidth={2}
         />
         <Controls
@@ -524,14 +534,14 @@ function snapValue(value: number, gridSize: number): number {
 
 function isCanvasWheelPanTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false;
-  if (!target.closest(".cw-canvas")) return false;
-  if (target.closest(".cw-node--focused")) return false;
-  if (target.closest(".cw-inline-chat")) return false;
-  if (target.closest(".cw-node-switcher")) return false;
-  if (target.closest(".cw-shortcuts")) return false;
-  if (target.closest(".cw-onboarding")) return false;
-  if (target.closest(".cw-problems")) return false;
-  if (target.closest(".cw-toolbar")) return false;
+  if (!target.closest(DOM_SELECTORS.canvas)) return false;
+  if (target.closest(DOM_SELECTORS.focusedNode)) return false;
+  if (target.closest(DOM_SELECTORS.inlineChat)) return false;
+  if (target.closest(DOM_SELECTORS.nodeSwitcher)) return false;
+  if (target.closest(DOM_SELECTORS.shortcuts)) return false;
+  if (target.closest(DOM_SELECTORS.onboarding)) return false;
+  if (target.closest(DOM_SELECTORS.problems)) return false;
+  if (target.closest(DOM_SELECTORS.toolbar)) return false;
   if (target.closest(".react-flow__controls")) return false;
   if (target.closest(".react-flow__minimap")) return false;
   if (isTextEditingElement(target)) return false;

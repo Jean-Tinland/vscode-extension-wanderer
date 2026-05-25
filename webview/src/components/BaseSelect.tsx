@@ -1,6 +1,14 @@
 import { Select } from "@base-ui/react/select";
+import classNames from "classnames";
 import type { ReactNode } from "react";
 import { Icon } from "./Icon";
+import designStyles from "../styles/design-system.module.css";
+import toolbarStyles from "../styles/toolbar.module.css";
+
+const styles: Record<string, string> = {
+  ...designStyles,
+  ...toolbarStyles,
+};
 
 export interface BaseSelectOption<Value extends string> {
   value: Value;
@@ -46,44 +54,47 @@ export function BaseSelect<Value extends string>({
       }}
     >
       <Select.Trigger
-        className="cw-ui-button cw-toolbar__select-trigger"
+        className={classNames(styles.uiButton, styles.toolbarSelectTrigger)}
         aria-label={ariaLabel}
         title={title}
         disabled={disabled}
       >
-        <span className="cw-toolbar__select-label">{label}</span>
-        <span className="cw-toolbar__select-value">
+        <span className={styles.toolbarSelectLabel}>{label}</span>
+        <span className={styles.toolbarSelectValue}>
           <Select.Value placeholder={placeholder} />
         </span>
-        <Select.Icon className="cw-toolbar__select-caret" aria-hidden="true">
+        <Select.Icon className={styles.toolbarSelectCaret} aria-hidden="true">
           <Icon code="chevron-down" size={12} aria-hidden="true" />
         </Select.Icon>
       </Select.Trigger>
 
       <Select.Portal>
         <Select.Positioner sideOffset={8} align="start">
-          <Select.Popup className="cw-ui-select-popup" aria-label={ariaLabel}>
-            <Select.List className="cw-ui-select-list">
+          <Select.Popup
+            className={styles.uiSelectPopup}
+            aria-label={ariaLabel}
+          >
+            <Select.List className={styles.uiSelectList}>
               {options.map((option) => (
                 <Select.Item
                   key={option.value}
                   value={option.value}
                   disabled={option.disabled}
-                  className="cw-ui-select-item"
+                  className={styles.uiSelectItem}
                 >
-                  <span className="cw-ui-select-item__content">
-                    <Select.ItemText className="cw-ui-select-item__label">
+                  <span className={styles.uiSelectItemContent}>
+                    <Select.ItemText className={styles.uiSelectItemLabel}>
                       {option.label}
                     </Select.ItemText>
                     {option.meta ? (
-                      <span className="cw-ui-select-item__meta">
+                      <span className={styles.uiSelectItemMeta}>
                         {option.meta}
                       </span>
                     ) : null}
                   </span>
                   {selectedIndicator ? (
                     <Select.ItemIndicator
-                      className="cw-ui-select-item__indicator"
+                      className={styles.uiSelectItemIndicator}
                       aria-hidden="true"
                     >
                       {selectedIndicator}
