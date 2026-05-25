@@ -1,14 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type {
-  CanvasCommand,
-  CanvasEdge,
-  CanvasNode,
-  EditorBufferSnapshot,
-  SavedLayoutSummary,
-} from "@shared/protocol";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { CanvasCommand, SavedLayoutSummary } from "@shared/protocol";
 import { Canvas } from "./canvas/Canvas";
 import {
-  onExtensionMessage,
   patchWebviewState,
   postToExtension,
   readWebviewState,
@@ -18,38 +11,24 @@ import { NodeSwitcher } from "./components/NodeSwitcher";
 import { OnboardingTips } from "./components/OnboardingTips";
 import { ProblemsPanel, type ProblemItem } from "./components/ProblemsPanel";
 import { Toolbar } from "./components/Toolbar";
-import { findFirstAvailableVerticalSlot } from "./graph/placement";
+import { useCommandOpenViewportBatch } from "./hooks/useCommandOpenViewportBatch";
+import { useExtensionMessages } from "./hooks/useExtensionMessages";
+import { useLayoutAutosave } from "./hooks/useLayoutAutosave";
 import { getShortcutHints } from "./keyboard/shortcuts";
-import {
-  emitFitNodes,
-  emitFocusNode,
-  emitZoomToFit,
-} from "./navigation/events";
-import { useGraphStore } from "./state/graphStore";
+import { ensureMonacoRuntime } from "./monaco/runtime";
+import { emitFocusNode, emitZoomToFit } from "./navigation/events";
 import {
   type ReferenceClickMode,
   useInteractionStore,
 } from "./state/interactionStore";
 import { useDiagnosticsStore } from "./state/diagnosticsStore";
+import { useGraphStore } from "./state/graphStore";
 import { useIntelligenceStore } from "./state/intelligenceStore";
 import { useViewportStore } from "./state/viewportStore";
 import { useEditorSettingsStore } from "./state/editorSettingsStore";
-import {
-  collectLayoutBuffers,
-  rememberLayoutBuffers,
-} from "./nodes/editorBufferStore";
-import { isPendingWebviewOpenRequest } from "./nodes/openRequestTracker";
-import { pushEditorSettings } from "./monaco/editorConfig";
-import { ensureMonacoRuntime, queueMonacoTheme } from "./monaco/runtime";
 
-const AUTOSAVE_FULL_DEBOUNCE_MS = 550;
-const AUTOSAVE_CAMERA_DEBOUNCE_MS = 240;
-const AUTOSAVE_STATS_LOG_INTERVAL = 25;
-const COMMAND_OPEN_VIEWPORT_BATCH_MS = 80;
 const ONBOARDING_SEEN_KEY = "onboardingSeen";
 const ONBOARDING_DISMISSED_KEY = "onboardingDismissed";
-
-type LayoutBuffers = Record<string, EditorBufferSnapshot> | undefined;
 
 interface AppPersistedState {
   onboardingSeen?: boolean;
@@ -90,22 +69,6 @@ export function App() {
     return (
       state?.onboardingDismissed !== true && state?.onboardingSeen !== true
     );
-  });
-  const autosaveRef = useRef({
-    lastGraphSignature: "",
-    lastBufferSignature: "",
-    lastPersistSignature: "",
-    cachedBuffers: undefined as LayoutBuffers,
-    fullWrites: 0,
-    cameraWrites: 0,
-    skippedWrites: 0,
-  });
-  const commandOpenViewportBatchRef = useRef<{
-    nodeIds: string[];
-    timer: number | null;
-  }>({
-    nodeIds: [],
-    timer: null,
   });
 
   const openFile = useCallback(() => {
@@ -380,120 +343,23 @@ export function App() {
   }, [diagnosticsByUri, nodes]);
 
   const canCycleNodes = nodes.length > 0;
+  const queueCommandOpenViewportUpdate = useCommandOpenViewportBatch();
 
   useEffect(() => {
     if (nodes.length === 0) return;
     void ensureMonacoRuntime();
   }, [nodes.length]);
 
-  const queueCommandOpenViewportUpdate = useCallback((nodeId: string) => {
-    const batch = commandOpenViewportBatchRef.current;
-    if (!batch.nodeIds.includes(nodeId)) {
-      batch.nodeIds.push(nodeId);
-    }
-    if (batch.timer !== null) {
-      window.clearTimeout(batch.timer);
-    }
-    batch.timer = window.setTimeout(() => {
-      const nodeIds = batch.nodeIds.slice();
-      batch.nodeIds = [];
-      batch.timer = null;
-
-      if (nodeIds.length === 0) return;
-      if (nodeIds.length === 1) {
-        emitFocusNode({ nodeId: nodeIds[0], recordHistory: false });
-        return;
-      }
-
-      emitFitNodes({ nodeIds, padding: 0.3, duration: 320 });
-    }, COMMAND_OPEN_VIEWPORT_BATCH_MS);
-  }, []);
-
-  useEffect(() => {
-    const batch = commandOpenViewportBatchRef.current;
-    return () => {
-      if (batch.timer !== null) {
-        window.clearTimeout(batch.timer);
-      }
-      batch.nodeIds = [];
-      batch.timer = null;
-    };
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = onExtensionMessage((msg) => {
-      if (msg.type === "init") {
-        if (msg.theme) queueMonacoTheme(msg.theme);
-        if (msg.editorSettings) {
-          setEditorSettings(msg.editorSettings);
-          pushEditorSettings(msg.editorSettings);
-        }
-        setSavedLayouts(msg.savedLayouts);
-        setReferenceClickMode(msg.referenceClickMode);
-        if (msg.settings) setSettings(msg.settings);
-        if (msg.layout) {
-          rememberLayoutBuffers(msg.layout.buffers);
-          hydrate(msg.layout);
-        }
-      } else if (msg.type === "themeChanged") {
-        queueMonacoTheme(msg.theme);
-      } else if (msg.type === "editorSettingsChanged") {
-        setEditorSettings(msg.editorSettings);
-        pushEditorSettings(msg.editorSettings);
-      } else if (msg.type === "savedLayoutsChanged") {
-        setSavedLayouts(msg.layouts);
-      } else if (msg.type === "diagnostics") {
-        useDiagnosticsStore.getState().setDiagnostics(msg.uri, msg.markers);
-      } else if (msg.type === "openFileResult") {
-        if (isPendingWebviewOpenRequest(msg.requestId)) return;
-        // Command-driven open (no in-flight request waited for this).
-        const graph = useGraphStore.getState();
-        const existing = graph.nodes.find(
-          (n) => n.fileUri === msg.node.fileUri,
-        );
-        if (existing) {
-          graph.focusNode(existing.id);
-          queueCommandOpenViewportUpdate(existing.id);
-          return;
-        }
-
-        const cam = useViewportStore.getState();
-        const pos = findFirstAvailableVerticalSlot(
-          {
-            x: -cam.x / cam.zoom,
-            y: -cam.y / cam.zoom,
-          },
-          graph.nodes.map((node) => ({
-            x: node.x,
-            y: node.y,
-            width: node.width,
-            height: node.height,
-          })),
-          graph.settings,
-        );
-        const node = {
-          ...msg.node,
-          x: pos.x,
-          y: pos.y,
-        };
-        upsertNode(node);
-        useGraphStore.getState().focusNode(node.id);
-        queueCommandOpenViewportUpdate(node.id);
-      } else if (msg.type === "command") {
-        handleCanvasCommand(msg.command);
-      }
-    });
-    postToExtension({ type: "ready" });
-    return unsubscribe;
-  }, [
+  useExtensionMessages({
     handleCanvasCommand,
     hydrate,
-    queueCommandOpenViewportUpdate,
+    setSavedLayouts,
     setSettings,
     upsertNode,
     setEditorSettings,
     setReferenceClickMode,
-  ]);
+    queueCommandOpenViewportUpdate,
+  });
 
   useEffect(() => {
     if (
@@ -522,119 +388,7 @@ export function App() {
     showShortcuts,
   ]);
 
-  // Debounced auto-save with split graph/camera paths and payload dedupe.
-  useEffect(() => {
-    let fullTimer: number | undefined;
-    let cameraTimer: number | undefined;
-
-    const state = autosaveRef.current;
-    const maybeReportStats = () => {
-      const total = state.fullWrites + state.cameraWrites + state.skippedWrites;
-      if (total === 0 || total % AUTOSAVE_STATS_LOG_INTERVAL !== 0) return;
-      postToExtension({
-        type: "log",
-        level: "info",
-        message: `autosave full=${state.fullWrites} camera=${state.cameraWrites} skipped=${state.skippedWrites}`,
-      });
-    };
-
-    const persist = (mode: "full" | "camera") => {
-      const graph = useGraphStore.getState();
-      const cam = useViewportStore.getState();
-
-      const graphSignature = buildGraphSignature(graph.nodes, graph.edges);
-      const cameraSignature = buildCameraSignature(cam.x, cam.y, cam.zoom);
-
-      let buffers = state.cachedBuffers;
-      let bufferSignature = state.lastBufferSignature;
-      const needsBufferRefresh =
-        mode === "full" ||
-        state.lastGraphSignature.length === 0 ||
-        state.lastGraphSignature !== graphSignature;
-
-      if (needsBufferRefresh) {
-        buffers = collectLayoutBuffers(graph.nodes.map((node) => node.fileUri));
-        bufferSignature = buildBufferSignature(buffers);
-        state.cachedBuffers = buffers;
-        state.lastBufferSignature = bufferSignature;
-        state.lastGraphSignature = graphSignature;
-      }
-
-      const persistSignature = `${graphSignature}#${cameraSignature}#${bufferSignature}`;
-      if (persistSignature === state.lastPersistSignature) {
-        state.skippedWrites += 1;
-        maybeReportStats();
-        return;
-      }
-
-      postToExtension({
-        type: "saveLayout",
-        snapshot: {
-          nodes: graph.nodes,
-          edges: graph.edges,
-          camera: { x: cam.x, y: cam.y, zoom: cam.zoom },
-          ...(buffers ? { buffers } : {}),
-        },
-      });
-
-      state.lastPersistSignature = persistSignature;
-      if (mode === "camera") state.cameraWrites += 1;
-      else state.fullWrites += 1;
-      maybeReportStats();
-    };
-
-    const schedulePersist = (mode: "full" | "camera") => {
-      if (mode === "full") {
-        if (fullTimer !== undefined) window.clearTimeout(fullTimer);
-        fullTimer = window.setTimeout(
-          () => persist("full"),
-          AUTOSAVE_FULL_DEBOUNCE_MS,
-        );
-        return;
-      }
-
-      if (cameraTimer !== undefined) window.clearTimeout(cameraTimer);
-      cameraTimer = window.setTimeout(
-        () => persist("camera"),
-        AUTOSAVE_CAMERA_DEBOUNCE_MS,
-      );
-    };
-
-    let lastNodes = useGraphStore.getState().nodes;
-    let lastEdges = useGraphStore.getState().edges;
-    const unsubscribeGraph = useGraphStore.subscribe((graphState) => {
-      if (graphState.nodes === lastNodes && graphState.edges === lastEdges) {
-        return;
-      }
-      lastNodes = graphState.nodes;
-      lastEdges = graphState.edges;
-      schedulePersist("full");
-    });
-
-    let lastX = useViewportStore.getState().x;
-    let lastY = useViewportStore.getState().y;
-    let lastZoom = useViewportStore.getState().zoom;
-    const unsubscribeViewport = useViewportStore.subscribe((viewportState) => {
-      if (
-        viewportState.x === lastX &&
-        viewportState.y === lastY &&
-        viewportState.zoom === lastZoom
-      ) {
-        return;
-      }
-      lastX = viewportState.x;
-      lastY = viewportState.y;
-      lastZoom = viewportState.zoom;
-      schedulePersist("camera");
-    });
-
-    return () => {
-      unsubscribeGraph();
-      unsubscribeViewport();
-      if (fullTimer !== undefined) window.clearTimeout(fullTimer);
-      if (cameraTimer !== undefined) window.clearTimeout(cameraTimer);
-    };
-  }, []);
+  useLayoutAutosave();
 
   return (
     <>
@@ -697,54 +451,4 @@ export function App() {
       <Canvas />
     </>
   );
-}
-
-function buildGraphSignature(nodes: CanvasNode[], edges: CanvasEdge[]): string {
-  const nodeSignature = nodes
-    .map((node) =>
-      [
-        node.id,
-        node.fileUri,
-        round(node.x, 2),
-        round(node.y, 2),
-        round(node.width, 2),
-        round(node.height, 2),
-        node.revealRange
-          ? `${node.revealRange.startLine}:${node.revealRange.startCharacter}:${node.revealRange.endLine}:${node.revealRange.endCharacter}`
-          : "",
-      ].join("|"),
-    )
-    .join(";");
-  const edgeSignature = edges
-    .map((edge) => [edge.id, edge.source, edge.target, edge.type].join("|"))
-    .join(";");
-  return `${nodeSignature}::${edgeSignature}`;
-}
-
-function buildCameraSignature(x: number, y: number, zoom: number): string {
-  return `${round(x, 3)}|${round(y, 3)}|${round(zoom, 4)}`;
-}
-
-function buildBufferSignature(buffers: LayoutBuffers): string {
-  if (!buffers) return "";
-  return Object.keys(buffers)
-    .sort((a, b) => a.localeCompare(b))
-    .map((fileUri) => {
-      const buffer = buffers[fileUri];
-      return `${fileUri}:${buffer.languageId}:${buffer.isDirty ? 1 : 0}:${hashString(buffer.content)}`;
-    })
-    .join(";");
-}
-
-function hashString(value: string): string {
-  let hash = 0;
-  for (let i = 0; i < value.length; i += 1) {
-    hash = (hash * 31 + value.charCodeAt(i)) | 0;
-  }
-  return `${value.length}:${hash >>> 0}`;
-}
-
-function round(value: number, digits: number): number {
-  const factor = 10 ** digits;
-  return Math.round(value * factor) / factor;
 }

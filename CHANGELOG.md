@@ -6,6 +6,7 @@
 - refactor: migration from global styles to CSS modules
 - refactor: simplify layout saving and loading logic in CanvasPanel
 - refactor: change export to interface for consistency across protocol and state files
+- refactor: cleanup App entry point by splitting logic into several hooks
 
 ## 0.1.5 - Sun, May 24 2026
 
