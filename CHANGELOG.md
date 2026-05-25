@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.6 - Mon, May 25 2026
+
+- feat: implement BaseMenu component with styles and integrate into Toolbar
+
 ## 0.1.5 - Sun, May 24 2026
 
 - feat: enhance canvas functionality and layout management + add base ui basic design system

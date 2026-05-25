@@ -3,6 +3,7 @@ import type { SavedLayoutSummary } from "@shared/protocol";
 import type { ShortcutHint } from "../keyboard/shortcuts";
 import { useDialogFocusTrap } from "../hooks/useDialogFocusTrap";
 import type { ReferenceClickMode } from "../state/interactionStore";
+import { BaseMenu, type BaseMenuOption } from "./BaseMenu";
 import { BaseSelect, type BaseSelectOption } from "./BaseSelect";
 import { Icon } from "./Icon";
 import { Tooltip } from "./Tooltip";
@@ -96,7 +97,7 @@ export function Toolbar({
   canCycleNodes,
 }: ToolbarProps) {
   const shortcutsPanelRef = useRef<HTMLDivElement | null>(null);
-  const layoutOptions: BaseSelectOption<string>[] = savedLayouts.map(
+  const layoutMenuOptions: BaseMenuOption<string>[] = savedLayouts.map(
     (layout) => ({
       value: layout.name,
       label: layout.name,
@@ -161,14 +162,14 @@ export function Toolbar({
               aria-hidden="true"
             />
           </ToolbarIconButton>
-          <BaseSelect<string>
+          <BaseMenu<string>
             label="Layouts"
             ariaLabel="Saved layouts"
-            value={null}
-            options={layoutOptions}
-            placeholder={savedLayouts.length > 0 ? "Load" : "Empty"}
-            disabled={savedLayouts.length === 0}
-            onValueChange={onLoadLayout}
+            triggerValue={savedLayouts.length > 0 ? "Load" : "Empty"}
+            options={layoutMenuOptions}
+            emptyStateLabel="No saved layouts yet."
+            title="Load a saved layout"
+            onSelect={onLoadLayout}
           />
           <ToolbarIconButton
             className="cw-toolbar__icon-button"
