@@ -1,11 +1,9 @@
 import { create } from "zustand";
 import {
   DEFAULT_REFERENCE_CLICK_MODE,
-  REFERENCE_CLICK_MODES,
   type ReferenceClickMode,
 } from "@shared/protocol";
 
-export { DEFAULT_REFERENCE_CLICK_MODE, REFERENCE_CLICK_MODES };
 export type { ReferenceClickMode };
 
 interface InteractionState {

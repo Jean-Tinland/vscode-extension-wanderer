@@ -1,8 +1,8 @@
 import { create } from "zustand";
 
-export type IntelligenceTimeoutKind = "hover" | "completion";
+type IntelligenceTimeoutKind = "hover" | "completion";
 
-export interface EditorIntelligenceActions {
+interface EditorIntelligenceActions {
   retryHover: () => void;
   retryCompletion: () => void;
 }

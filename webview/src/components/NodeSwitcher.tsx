@@ -1,9 +1,9 @@
 import classNames from "classnames";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useDialogFocusTrap } from "../hooks/useDialogFocusTrap";
 import styles from "../styles/overlays.module.css";
 
-export interface NodeSwitchItem {
+interface NodeSwitchItem {
   id: string;
   fileUri: string;
 }
@@ -21,17 +21,25 @@ export function NodeSwitcher({
   onSelect,
   onClose,
 }: NodeSwitcherProps) {
+  if (!open) return null;
+
+  return (
+    <NodeSwitcherDialog nodes={nodes} onSelect={onSelect} onClose={onClose} />
+  );
+}
+
+interface NodeSwitcherDialogProps {
+  nodes: NodeSwitchItem[];
+  onSelect: (nodeId: string) => void;
+  onClose: () => void;
+}
+
+function NodeSwitcherDialog({ nodes, onSelect, onClose }: NodeSwitcherDialogProps) {
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
-  useDialogFocusTrap(open, panelRef);
-
-  useEffect(() => {
-    if (!open) return;
-    setQuery("");
-    setActiveIndex(0);
-  }, [open]);
+  useDialogFocusTrap(true, panelRef);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -43,20 +51,23 @@ export function NodeSwitcher({
     });
   }, [nodes, query]);
 
-  useEffect(() => {
-    if (filtered.length === 0) {
-      setActiveIndex(0);
-      return;
-    }
-    setActiveIndex((idx) => Math.min(Math.max(idx, 0), filtered.length - 1));
-  }, [filtered]);
-
-  if (!open) return null;
+  const clampedActiveIndex =
+    filtered.length === 0
+      ? 0
+      : Math.min(Math.max(activeIndex, 0), filtered.length - 1);
 
   const selectActive = () => {
-    const active = filtered[activeIndex];
+    const active = filtered[clampedActiveIndex];
     if (!active) return;
     onSelect(active.id);
+  };
+
+  const moveActive = (delta: number) => {
+    setActiveIndex((index) => {
+      if (filtered.length === 0) return 0;
+      const start = Math.min(Math.max(index, 0), filtered.length - 1);
+      return Math.min(Math.max(start + delta, 0), filtered.length - 1);
+    });
   };
 
   return (
@@ -74,14 +85,12 @@ export function NodeSwitcher({
         }
         if (event.key === "ArrowDown") {
           event.preventDefault();
-          setActiveIndex((idx) =>
-            filtered.length === 0 ? 0 : Math.min(idx + 1, filtered.length - 1),
-          );
+          moveActive(1);
           return;
         }
         if (event.key === "ArrowUp") {
           event.preventDefault();
-          setActiveIndex((idx) => Math.max(idx - 1, 0));
+          moveActive(-1);
           return;
         }
         if (event.key === "Enter") {
@@ -125,7 +134,7 @@ export function NodeSwitcher({
               <p className={styles.nodeSwitcherEmpty}>No matching nodes</p>
             ) : (
               filtered.map((node, idx) => {
-                const active = idx === activeIndex;
+                const active = idx === clampedActiveIndex;
                 return (
                   <button
                     key={node.id}

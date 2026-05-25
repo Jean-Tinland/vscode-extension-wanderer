@@ -32,7 +32,7 @@ export interface CanvasEdge {
   type: "definition" | "reference" | "manual";
 }
 
-export interface Camera {
+interface Camera {
   x: number;
   y: number;
   zoom: number;
@@ -261,14 +261,14 @@ export type WebviewMessage =
     }
   | { type: "cancelRequest"; requestId: string };
 
-export interface NodePlacement {
+interface NodePlacement {
   /** If provided, place new node relative to this node. */
   sourceNodeId?: string;
   /** Vertical index when stacking multiple results. */
   stackIndex?: number;
 }
 
-export interface OpenDialogOptions {
+interface OpenDialogOptions {
   allowMultiSelect?: boolean;
   pathFirst?: boolean;
 }

@@ -24,7 +24,7 @@ import classNames from "classnames";
 import type { ComponentPropsWithoutRef } from "react";
 import baseStyles from "../styles/base.module.css";
 
-export type IconCode =
+type IconCode =
   | "check"
   | "chevron-down"
   | "close"

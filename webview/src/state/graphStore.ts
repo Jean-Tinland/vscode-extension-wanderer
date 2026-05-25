@@ -51,7 +51,7 @@ const EXPANDED_HEIGHT_SCALE = 1.5;
 const EXPANDED_WIDTH_DELTA = 220;
 const EXPANDED_HEIGHT_DELTA = 140;
 
-export function getExpandedNodeSize(settings: CanvasSettings): {
+function getExpandedNodeSize(settings: CanvasSettings): {
   width: number;
   height: number;
 } {
@@ -77,9 +77,11 @@ export function isNodeExpandedSize(
 
 function pruneIds(ids: string[], valid: Set<string>): string[] {
   const out: string[] = [];
+  const seen = new Set<string>();
   for (const id of ids) {
     if (!valid.has(id)) continue;
-    if (out.includes(id)) continue;
+    if (seen.has(id)) continue;
+    seen.add(id);
     out.push(id);
   }
   return out;
@@ -93,8 +95,10 @@ function orderedNodeIds(nodes: CanvasNode[], mru: string[]): string[] {
   const nodeIds = nodes.map((node) => node.id);
   const valid = new Set(nodeIds);
   const ordered = pruneIds(mru, valid);
+  const seen = new Set(ordered);
   for (const id of nodeIds) {
-    if (ordered.includes(id)) continue;
+    if (seen.has(id)) continue;
+    seen.add(id);
     ordered.push(id);
   }
   return ordered;

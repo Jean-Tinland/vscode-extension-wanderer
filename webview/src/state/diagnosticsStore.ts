@@ -1,7 +1,7 @@
 import type { DiagnosticData } from "@shared/protocol";
 import { create } from "zustand";
 
-export interface DiagnosticsCounts {
+interface DiagnosticsCounts {
   errors: number;
   warnings: number;
   infos: number;
@@ -9,7 +9,7 @@ export interface DiagnosticsCounts {
   total: number;
 }
 
-export interface FileDiagnostics {
+interface FileDiagnostics {
   uri: string;
   markers: DiagnosticData[];
   counts: DiagnosticsCounts;
@@ -23,7 +23,7 @@ interface DiagnosticsState {
   clearAllDiagnostics: () => void;
 }
 
-export function countDiagnostics(markers: DiagnosticData[]): DiagnosticsCounts {
+function countDiagnostics(markers: DiagnosticData[]): DiagnosticsCounts {
   const counts: DiagnosticsCounts = {
     errors: 0,
     warnings: 0,
@@ -52,7 +52,7 @@ export function countDiagnostics(markers: DiagnosticData[]): DiagnosticsCounts {
   return counts;
 }
 
-export function severityBucket(
+function severityBucket(
   severity: number,
 ): "error" | "warning" | "info" | "hint" {
   if (severity >= 8) return "error";
