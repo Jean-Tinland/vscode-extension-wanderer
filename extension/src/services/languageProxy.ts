@@ -8,6 +8,36 @@ import type {
   FormatEdit,
 } from "../../../shared/protocol";
 
+const MONACO_COMPLETION_KIND_TEXT = 18;
+
+const COMPLETION_KIND_MAP: Record<number, number> = {
+  [vscode.CompletionItemKind.Text]: MONACO_COMPLETION_KIND_TEXT,
+  [vscode.CompletionItemKind.Method]: 0,
+  [vscode.CompletionItemKind.Function]: 1,
+  [vscode.CompletionItemKind.Constructor]: 2,
+  [vscode.CompletionItemKind.Field]: 3,
+  [vscode.CompletionItemKind.Variable]: 4,
+  [vscode.CompletionItemKind.Class]: 5,
+  [vscode.CompletionItemKind.Interface]: 7,
+  [vscode.CompletionItemKind.Module]: 8,
+  [vscode.CompletionItemKind.Property]: 9,
+  [vscode.CompletionItemKind.Unit]: 12,
+  [vscode.CompletionItemKind.Value]: 13,
+  [vscode.CompletionItemKind.Enum]: 15,
+  [vscode.CompletionItemKind.Keyword]: 17,
+  [vscode.CompletionItemKind.Snippet]: 27,
+  [vscode.CompletionItemKind.Color]: 19,
+  [vscode.CompletionItemKind.File]: 20,
+  [vscode.CompletionItemKind.Reference]: 21,
+  [vscode.CompletionItemKind.Folder]: 23,
+  [vscode.CompletionItemKind.EnumMember]: 16,
+  [vscode.CompletionItemKind.Constant]: 14,
+  [vscode.CompletionItemKind.Struct]: 6,
+  [vscode.CompletionItemKind.Event]: 10,
+  [vscode.CompletionItemKind.Operator]: 11,
+  [vscode.CompletionItemKind.TypeParameter]: 24,
+};
+
 export class LanguageProxy {
   async getDefinitions(
     uri: vscode.Uri,
@@ -151,35 +181,8 @@ function mapCompletionKind(
 ): number {
   // Monaco CompletionItemKind values (0-based index).
   // VS Code kinds map reasonably well to Monaco kinds.
-  if (kind === undefined) return 18; // Text
-  const map: Record<number, number> = {
-    [vscode.CompletionItemKind.Text]: 18,
-    [vscode.CompletionItemKind.Method]: 0,
-    [vscode.CompletionItemKind.Function]: 1,
-    [vscode.CompletionItemKind.Constructor]: 2,
-    [vscode.CompletionItemKind.Field]: 3,
-    [vscode.CompletionItemKind.Variable]: 4,
-    [vscode.CompletionItemKind.Class]: 5,
-    [vscode.CompletionItemKind.Interface]: 7,
-    [vscode.CompletionItemKind.Module]: 8,
-    [vscode.CompletionItemKind.Property]: 9,
-    [vscode.CompletionItemKind.Unit]: 12,
-    [vscode.CompletionItemKind.Value]: 13,
-    [vscode.CompletionItemKind.Enum]: 15,
-    [vscode.CompletionItemKind.Keyword]: 17,
-    [vscode.CompletionItemKind.Snippet]: 27,
-    [vscode.CompletionItemKind.Color]: 19,
-    [vscode.CompletionItemKind.File]: 20,
-    [vscode.CompletionItemKind.Reference]: 21,
-    [vscode.CompletionItemKind.Folder]: 23,
-    [vscode.CompletionItemKind.EnumMember]: 16,
-    [vscode.CompletionItemKind.Constant]: 14,
-    [vscode.CompletionItemKind.Struct]: 6,
-    [vscode.CompletionItemKind.Event]: 10,
-    [vscode.CompletionItemKind.Operator]: 11,
-    [vscode.CompletionItemKind.TypeParameter]: 24,
-  };
-  return map[kind] ?? 18;
+  if (kind === undefined) return MONACO_COMPLETION_KIND_TEXT;
+  return COMPLETION_KIND_MAP[kind] ?? MONACO_COMPLETION_KIND_TEXT;
 }
 
 function completionRangeOf(

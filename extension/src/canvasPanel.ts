@@ -229,17 +229,14 @@ export class CanvasPanel {
   }
 
   /** Request the current snapshot from the webview and save it as a named layout. */
-  saveNamedLayout(
-    name: string,
-    layoutStore: import("./persistence/layoutStore").LayoutStore,
-  ): void {
+  saveNamedLayout(name: string): void {
     // Ask the webview for the current snapshot via requestSaveLayout,
     // then intercept the response.
     const unsub = this.panel.webview.onDidReceiveMessage((msg: unknown) => {
       if (!isWebviewMessage(msg)) return;
       if (msg.type === "saveLayout") {
         unsub.dispose();
-        layoutStore.saveNamed(name, msg.snapshot);
+        this.layoutStore.saveNamed(name, msg.snapshot);
         vscode.window.showInformationMessage(
           `Wanderer: layout "${name}" saved.`,
         );
@@ -264,18 +261,14 @@ export class CanvasPanel {
     else this.pendingOpens.push(run);
   }
 
-  openFileOnCanvas(
-    uri: vscode.Uri,
-    revealRange?: RangeLike,
-    sourceNodeId?: string,
-  ): void {
+  openFileOnCanvas(uri: vscode.Uri, revealRange?: RangeLike): void {
     this.assertAllowedUri(uri, "open file");
     this.getDocumentSync().watch(uri);
     const run = () => {
       this.post({
         type: "openFileResult" as const,
         requestId: randomUUID(),
-        ...this.makeNodePayloadSync(uri, revealRange, sourceNodeId),
+        ...this.makeNodePayloadSync(uri, revealRange),
       } as ExtensionMessage);
     };
     if (this.ready) run();
@@ -382,11 +375,7 @@ export class CanvasPanel {
     msg: Extract<WebviewMessage, { type: "openFile" }>,
   ): Promise<void> {
     const uri = this.parseRequestUri(msg.fileUri, "open file");
-    const payload = await this.makeNodePayload(
-      uri,
-      msg.revealRange,
-      msg.placement?.sourceNodeId,
-    );
+    const payload = await this.makeNodePayload(uri, msg.revealRange);
     this.post({ type: "openFileResult", requestId: msg.requestId, ...payload });
     this.getDocumentSync().watch(uri);
   }
@@ -469,7 +458,6 @@ export class CanvasPanel {
   private async makeNodePayload(
     uri: vscode.Uri,
     revealRange?: RangeLike,
-    sourceNodeId?: string,
   ): Promise<{
     node: CanvasNode;
     content: string;
@@ -487,9 +475,6 @@ export class CanvasPanel {
       height: settings.defaultHeight,
       revealRange,
     };
-    // Spatial placement is finalized in the webview which knows about the source node.
-    // We still tag sourceNodeId via the requestId-less init pathway by using node.id metadata.
-    void sourceNodeId;
     return {
       node,
       content: doc.getText(),
@@ -498,11 +483,7 @@ export class CanvasPanel {
     };
   }
 
-  private makeNodePayloadSync(
-    uri: vscode.Uri,
-    revealRange?: RangeLike,
-    sourceNodeId?: string,
-  ) {
+  private makeNodePayloadSync(uri: vscode.Uri, revealRange?: RangeLike) {
     // Best-effort sync read for command-driven opens before the webview has booted.
     const settings = this.readSettings();
     let content = "";
@@ -523,7 +504,6 @@ export class CanvasPanel {
         // ignore — webview will request the file properly once ready
       }
     }
-    void sourceNodeId;
     const node: CanvasNode = {
       id: randomUUID(),
       fileUri: uri.toString(),
@@ -622,7 +602,7 @@ export class CanvasPanel {
         v.trim().length === 0 ? "Name cannot be empty" : undefined,
     });
     if (!name) return;
-    this.saveNamedLayout(name.trim(), this.layoutStore);
+    this.saveNamedLayout(name.trim());
   }
 
   private async onRequestLoadNamedLayout(): Promise<void> {

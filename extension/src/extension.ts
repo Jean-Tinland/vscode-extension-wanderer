@@ -212,8 +212,7 @@ export function activate(context: vscode.ExtensionContext): void {
           v.trim().length === 0 ? "Name cannot be empty" : undefined,
       });
       if (!name) return;
-      const layoutStore = await getLayoutStore();
-      panel.saveNamedLayout(name.trim(), layoutStore);
+      panel.saveNamedLayout(name.trim());
     }),
 
     vscode.commands.registerCommand(

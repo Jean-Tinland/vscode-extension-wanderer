@@ -4,6 +4,7 @@
 
 - feat: implement BaseMenu component with styles and integrate into Toolbar
 - refactor: migration from global styles to CSS modules
+- refactor: simplify layout saving and loading logic in CanvasPanel
 
 ## 0.1.5 - Sun, May 24 2026
 
