@@ -534,17 +534,13 @@ export class CanvasPanel {
       "webview.editor.minimap.enabled",
       false,
     );
-    const bracketPairColorizationOverride = wandererCfg.inspect<boolean>(
+    const bracketPairColorizationOverride = wandererCfg.get<boolean | null>(
       "webview.editor.bracketPairColorization.enabled",
+      null,
     );
     const bracketPairColorizationEnabled =
-      bracketPairColorizationOverride?.workspaceFolderLanguageValue ??
-      bracketPairColorizationOverride?.workspaceLanguageValue ??
-      bracketPairColorizationOverride?.globalLanguageValue ??
-      bracketPairColorizationOverride?.workspaceFolderValue ??
-      bracketPairColorizationOverride?.workspaceValue ??
-      bracketPairColorizationOverride?.globalValue ??
-      cfg.get<boolean>("bracketPairColorization.enabled", true);
+      bracketPairColorizationOverride ??
+      cfg.get<boolean>("bracketPairColorization.enabled", false);
 
     return {
       fontSize: cfg.get<number>("fontSize", 14),

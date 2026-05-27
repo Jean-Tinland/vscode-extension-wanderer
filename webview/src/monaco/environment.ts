@@ -5,11 +5,48 @@ import { ensureShikiTokenizationReady } from "./shikiTokenization";
 
 let configurePromise: Promise<void> | null = null;
 
+const JSX_LIKE_LANGUAGE_CONFIGURATION: monaco.languages.LanguageConfiguration =
+  {
+    comments: {
+      lineComment: "//",
+      blockComment: ["/*", "*/"],
+    },
+    brackets: [
+      ["{", "}"],
+      ["[", "]"],
+      ["(", ")"],
+    ],
+    autoClosingPairs: [
+      { open: "{", close: "}" },
+      { open: "[", close: "]" },
+      { open: "(", close: ")" },
+      { open: '"', close: '"', notIn: ["string"] },
+      { open: "'", close: "'", notIn: ["string", "comment"] },
+      { open: "`", close: "`", notIn: ["string", "comment"] },
+      { open: "/**", close: " */", notIn: ["string"] },
+    ],
+    surroundingPairs: [
+      { open: "{", close: "}" },
+      { open: "[", close: "]" },
+      { open: "(", close: ")" },
+      { open: '"', close: '"' },
+      { open: "'", close: "'" },
+      { open: "`", close: "`" },
+    ],
+  };
+
 function ensureLanguageRegistration(id: string): void {
   const exists = monaco.languages.getLanguages().some((lang) => lang.id === id);
   if (!exists) {
     monaco.languages.register({ id });
   }
+}
+
+function ensureLanguageConfiguration(id: string): void {
+  monaco.languages.setLanguageConfiguration(
+    id,
+    JSX_LIKE_LANGUAGE_CONFIGURATION,
+  );
 }
 
 function disableBuiltInLanguageServices(): void {
@@ -111,6 +148,8 @@ export async function configureMonacoEnvironment(): Promise<void> {
     disableBuiltInLanguageServices();
     ensureLanguageRegistration("tsx");
     ensureLanguageRegistration("jsx");
+    ensureLanguageConfiguration("tsx");
+    ensureLanguageConfiguration("jsx");
 
     loader.config({ monaco });
 

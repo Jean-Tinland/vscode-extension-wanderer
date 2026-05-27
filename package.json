@@ -3,7 +3,7 @@
   "displayName": "Wanderer",
   "description": "Spatial, infinite-canvas code navigation for VS Code, inspired by Haystack.",
   "icon": "media/logo.png",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "publisher": "jean",
   "repository": {
     "type": "git",
@@ -320,9 +320,12 @@
           "description": "Show the Monaco minimap inside Wanderer webview editors."
         },
         "wanderer.webview.editor.bracketPairColorization.enabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable bracket pair colorization inside Wanderer webview editors."
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": null,
+          "markdownDescription": "Override bracket pair colorization inside Wanderer webview editors. Set to `null` to follow `editor.bracketPairColorization.enabled`."
         }
       }
     }

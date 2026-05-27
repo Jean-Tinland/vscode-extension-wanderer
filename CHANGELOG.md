@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.7 - Wed, May 27 2026
+
+- refactor: streamline className usage in EditorNode and enhance language configuration for JSX-like languages
+
 ## 0.1.6 - Mon, May 25 2026
 
 - feat: implement BaseMenu component with styles and integrate into Toolbar

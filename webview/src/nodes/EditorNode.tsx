@@ -484,10 +484,9 @@ export const EditorNode = memo(function EditorNode({
     <>
       <ResizeEdges nodeId={nodeId} />
       <div
-        className={classNames(
-          styles.node,
-          isFocusedNode && styles.nodeFocused,
-        )}
+        className={classNames(styles.node, {
+          [styles.nodeFocused]: isFocusedNode,
+        })}
         onMouseDownCapture={onNodeMouseDownCapture}
         data-node-focused={isFocusedNode ? "true" : undefined}
       >
@@ -557,11 +556,7 @@ export const EditorNode = memo(function EditorNode({
             >
               <button
                 type="button"
-                className={classNames(
-                  styles.nodeIconButton,
-                  "nodrag",
-                  "nopan",
-                )}
+                className={classNames(styles.nodeIconButton, "nodrag", "nopan")}
                 onPointerDown={preventHeaderActionDrag}
                 onClick={toggleSize}
                 title={isExpandedSize ? "Restore size" : "Expand size"}
@@ -582,11 +577,7 @@ export const EditorNode = memo(function EditorNode({
             <Tooltip label="Open on the side in a native editor">
               <button
                 type="button"
-                className={classNames(
-                  styles.nodeIconButton,
-                  "nodrag",
-                  "nopan",
-                )}
+                className={classNames(styles.nodeIconButton, "nodrag", "nopan")}
                 onPointerDown={preventHeaderActionDrag}
                 onClick={openInWorkbench}
                 aria-label="Open this file in a native editor"
@@ -602,11 +593,7 @@ export const EditorNode = memo(function EditorNode({
             <Tooltip label="Close this node">
               <button
                 type="button"
-                className={classNames(
-                  styles.nodeIconButton,
-                  "nodrag",
-                  "nopan",
-                )}
+                className={classNames(styles.nodeIconButton, "nodrag", "nopan")}
                 onPointerDown={preventHeaderActionDrag}
                 onClick={closeThisNode}
                 title="Close"
