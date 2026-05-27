@@ -5,6 +5,10 @@
 
 Wanderer is a VS Code extension for spatial code navigation on an infinite canvas. Open files as draggable editors, move around freely, zoom and de-zoom as needed and follow definitions or project usages without losing context.
 
+This project is in early development, expect bugs and rough edges until `v1` is released. Feedback and contributions are very welcome!
+
+**Notice: As I am working simultaneously on a lot of projects, things here may seem to move slowly but they are still in progress. I'm always monitoring my notifications and messages, so if you have any questions or want to chat about anything, feel free to reach out!**
+
 ![Preview](https://raw.githubusercontent.com/Jean-Tinland/vscode-extension-wanderer/main/media/preview.jpeg)
 
 Inspired by [Haystack](https://github.com/haystackeditor/haystack-editor).
